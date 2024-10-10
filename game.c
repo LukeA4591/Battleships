@@ -3,6 +3,10 @@
 #include "pacer.h"
 #include "navswitch.h"
 #include <stddef.h>
+#include <stdio.h>
+
+#define NUM_COLS 5
+#define NUM_ROWS 7
 
 static const pio_t rows[] =
         {
@@ -17,12 +21,18 @@ static const pio_t cols[] =
                 LEDMAT_COL4_PIO, LEDMAT_COL5_PIO
         };
 
-static const uint8_t bitmap[] =
+static uint8_t bitmap[] =
         {
                 0x01, 0x00, 0x00, 0x00, 0x00
         };
+uint16_t prev_column = -1;
+uint16_t column = 0;
+uint16_t row = 0;
 
 void displayShip(int current_column) {
+    for (int i = 0; i < NUM_COLS; i++) {
+        pio_output_high(cols[i]);
+    }
     pio_output_low(cols[current_column]);
     for (size_t current_row = 0; current_row < 7; current_row++)
     {
@@ -53,31 +63,40 @@ int main (void)
         pio_config_set(cols[i], PIO_OUTPUT_HIGH);
     }
 
-    
-    displayShip(0);
 
-
-    /*
     while (1)
     {
-
+        displayShip(column);
         pacer_wait ();
         navswitch_update ();
         if (navswitch_push_event_p (NAVSWITCH_EAST)){
-
+            if (column < 4) {
+                bitmap[column + 1] = bitmap[column];
+                bitmap[column] = 0x0;
+                prev_column = column;
+                column++;
+            }
         }
-            // Do something
 
         if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-
+            if (column > 0) {
+                bitmap[column - 1] = bitmap[column];
+                bitmap[column] = 0x0;
+                prev_column = column;
+                column--;
+            }
         }
-        // Do something
         if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-
+            if (row > 0) {
+                bitmap[column] >>= 1;
+                row--;
+            }
         }
         if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-
+            if (row < 6) {
+                bitmap[column] <<= 1;
+                row++;
+            }
         }
     }
-    */
 }
