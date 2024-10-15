@@ -4,9 +4,17 @@
 #include "navswitch.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define NUM_COLS 5
 #define NUM_ROWS 7
+
+uint16_t prev_column;
+uint16_t column;
+uint16_t row;
+bool large_placed = false;
+bool med_placed = false;
+bool small_placed = false;
 
 static const pio_t rows[] =
         {
@@ -23,20 +31,38 @@ static const pio_t cols[] =
 
 static uint8_t bitmap[] =
         {
-                0x01, 0x00, 0x00, 0x00, 0x00
+                0x00, 0x00, 0x00, 0x00, 0x00
         };
-uint16_t prev_column = -1;
-uint16_t column = 0;
-uint16_t row = 0;
 
-void displayShip(int current_column) {
+static uint8_t large_ship[] = 
+        {
+            0x0F, 0x00, 0x00, 0x00, 0x00
+        };
+
+static uint8_t med_ship[] = 
+        {
+            0x07, 0x00, 0x00, 0x00, 0x00
+        };
+
+static uint8_t small_ship[] = 
+        {
+            0x03, 0x00, 0x00, 0x00, 0x00
+        };
+
+void reset(void) {
+    prev_column = -1;
+    column = 0;
+    row = 0;
+}
+
+void displayShip(int current_column, uint8_t ship[]) {
     for (int i = 0; i < NUM_COLS; i++) {
         pio_output_high(cols[i]);
     }
     pio_output_low(cols[current_column]);
     for (size_t current_row = 0; current_row < 7; current_row++)
     {
-        if ((bitmap[current_column] >> current_row) & 1)
+        if ((ship[current_column] >> current_row) & 1)
         {
             pio_output_low(rows[current_row]);
         }
@@ -47,8 +73,61 @@ void displayShip(int current_column) {
     }
 }
 
+void move(uint8_t ship[], bool placed)
+{
+    uint8_t col_upper_lim = 4;
+    uint8_t col_lower_lim = 0;
+    uint8_t row_upper_lim;
+    uint8_t row_lower_lim = 0;
+    if (!large_placed) {
+        row_upper_lim = 3;
+    } else if (!med_placed) {
+        row_upper_lim = 4;
+    } else if (!small_placed) {
+        row_upper_lim = 5;
+    }
+    
+    
+    navswitch_update ();
+    if (navswitch_push_event_p (NAVSWITCH_EAST)){
+        if (column < col_upper_lim) {
+            ship[column + 1] = ship[column];
+            ship[column] = 0x0;
+            prev_column = column;
+            column++;
+        }
+    }
+
+    if (navswitch_push_event_p (NAVSWITCH_WEST)) {
+        if (column > col_lower_lim) {
+            ship[column - 1] = ship[column];
+            ship[column] = 0x0;
+            prev_column = column;
+            column--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
+        if (row > row_lower_lim) {
+            ship[column] >>= 1;
+            row--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
+        if (row < row_upper_lim) {
+            ship[column] <<= 1;
+            row++;
+        }
+    }
+
+    if (navswitch_push_event_p (NAVSWITCH_PUSH))
+    {
+        placed = !placed;
+    }
+}
+
 int main (void)
 {
+    reset ();
     system_init ();
     navswitch_init ();
     pacer_init (50);
@@ -66,38 +145,16 @@ int main (void)
 
     while (1)
     {
-        displayShip(column);
         pacer_wait ();
-        navswitch_update ();
-        if (navswitch_push_event_p (NAVSWITCH_EAST)){
-            if (column < 4) {
-                bitmap[column + 1] = bitmap[column];
-                bitmap[column] = 0x0;
-                prev_column = column;
-                column++;
-            }
-        }
-
-        if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-            if (column > 0) {
-                bitmap[column - 1] = bitmap[column];
-                bitmap[column] = 0x0;
-                prev_column = column;
-                column--;
-            }
-        }
-        if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-            if (row > 0) {
-                bitmap[column] >>= 1;
-                row--;
-            }
-        }
-        if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-            if (row < 6) {
-                bitmap[column] <<= 1;
-                row++;
-            }
+        if (!large_placed) {
+            move(large_ship, large_placed);
+            displayShip(column, large_ship);
+        } else if (!med_placed) {
+            move(med_ship, med_placed);
+            displayShip(column, med_ship);
+        } else if (!small_placed) {
+            move(small_ship, small_placed);
+            displayShip(column, small_ship);
         }
     }
 }
-// test
