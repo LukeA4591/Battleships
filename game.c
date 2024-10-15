@@ -122,9 +122,13 @@ void move(uint8_t ship[], bool* placed)
     if (navswitch_push_event_p (NAVSWITCH_PUSH))
     {
         *placed = !(*placed);
-        
+
     }
 }
+
+
+bool ship2 = true;
+bool ship3 = true;
 
 int main (void)
 {
@@ -151,11 +155,17 @@ int main (void)
             move(large_ship, &large_placed);
             displayShip(column, large_ship);
         } else if (!med_placed) {
-            reset();
+            if (ship2){
+                reset();
+                ship2 = !ship2;
+            }
             move(med_ship, &med_placed);
             displayShip(column, med_ship);
         } else if (!small_placed) {
-            reset();
+            if (ship3){
+                reset();
+                ship3 = !ship3;
+            }
             move(small_ship, &small_placed);
             displayShip(column, small_ship);
         }
