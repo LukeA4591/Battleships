@@ -73,7 +73,7 @@ void displayShip(int current_column, uint8_t ship[]) {
     }
 }
 
-void move(uint8_t ship[], bool placed)
+void move(uint8_t ship[], bool* placed)
 {
     uint8_t col_upper_lim = 4;
     uint8_t col_lower_lim = 0;
@@ -121,7 +121,8 @@ void move(uint8_t ship[], bool placed)
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH))
     {
-        placed = !placed;
+        *placed = !(*placed);
+        
     }
 }
 
@@ -147,13 +148,15 @@ int main (void)
     {
         pacer_wait ();
         if (!large_placed) {
-            move(large_ship, large_placed);
+            move(large_ship, &large_placed);
             displayShip(column, large_ship);
         } else if (!med_placed) {
-            move(med_ship, med_placed);
+            reset();
+            move(med_ship, &med_placed);
             displayShip(column, med_ship);
         } else if (!small_placed) {
-            move(small_ship, small_placed);
+            reset();
+            move(small_ship, &small_placed);
             displayShip(column, small_ship);
         }
     }
