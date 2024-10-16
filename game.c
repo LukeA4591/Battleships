@@ -9,7 +9,6 @@
 #define NUM_COLS 5
 #define NUM_ROWS 7
 
-int16_t columns[3] = {-1, -1, -1};
 uint16_t column;
 uint16_t row;
 bool large_placed = false;
@@ -34,6 +33,11 @@ static uint8_t map[] =
                 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
+static uint8_t placedShips[] = 
+        {
+                0x00, 0x00, 0x00, 0x00, 0x00
+        };
+
 static uint8_t large_ship = 0x0F;
 
 static uint8_t med_ship = 0x07;
@@ -47,7 +51,8 @@ void reset(void) {
 
 bool collision_check(uint8_t ship, uint16_t newcolumn, uint16_t newrow)
 {
-    if ((map[newcolumn] & (ship << newrow)) == 0) {
+
+    if ((placedShips[newcolumn] & (ship << newrow)) == 0x0) {
         return true;
     }
     return false;
@@ -91,38 +96,40 @@ void move(bool* placed, uint8_t ship, uint8_t shipNum)
         row_upper_lim = 5;
     }
     navswitch_update ();
-    if (navswitch_push_event_p (NAVSWITCH_EAST)){
-        if ((column < col_upper_lim) /*&& collision_check(ship, column++, row)*/) {
-            map[column + 1] = map[column];
-            map[column] = 0x0;
+    if (navswitch_push_event_p (NAVSWITCH_EAST)) { 
+        if ((column < col_upper_lim) && collision_check(ship, column + 1, row)) {
+            map[column + 1] |= (ship << row);
+            map[column] = placedShips[column];
             column++;
         }
     }
 
     if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-        if ((column > col_lower_lim) /*&& collision_check(ship, column--, row)*/) {
-            map[column - 1] = map[column];
-            map[column] = 0x0;
+        if ((column > col_lower_lim) && collision_check(ship, column - 1, row)) {
+            map[column - 1] |= (ship << row);
+            map[column] = placedShips[column];
             column--;
         }
     }
     if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-        if ((row > row_lower_lim) /*&& collision_check(ship, column, row--)*/) {
-            map[column] >>= 1;
+        if ((row > row_lower_lim) && collision_check(ship, column, row - 1)) {
             row--;
+            map[column] = placedShips[column];
+            map[column] |= (ship << row);
         }
     }
     if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-        if ((row < row_upper_lim) /*&& collision_check(ship, column, row--)*/) {
-            map[column] <<= 1;
+        if ((row < row_upper_lim) && collision_check(ship, column, row + 1)) {
             row++;
+            map[column] = placedShips[column];
+            map[column] |= (ship << row);
         }
     }
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH))
     {
+        placedShips[column] = ship << row;
         *placed = !(*placed);
-        columns[shipNum] = column;
     }
 }
 
@@ -133,7 +140,8 @@ void place_ship(uint8_t ship, uint8_t shipNum) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
                 map[j] |= ship;
-                columns[shipNum] = j;
+                column = j;
+                row = i;
                 return;
             }
         }
