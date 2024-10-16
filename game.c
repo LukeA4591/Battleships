@@ -36,9 +36,7 @@ static uint8_t map[] =
 
 static uint8_t large_ship = 0x0F;
 
-
 static uint8_t med_ship = 0x07;
-    
 
 static uint8_t small_ship = 0x03;
 
@@ -55,25 +53,27 @@ bool collision_check(uint8_t ship, uint16_t newcolumn, uint16_t newrow)
     return false;
 }
 
-
-static void displayMap (uint8_t current_column)
+static uint8_t prev_column = 4;
+static void displayMap(uint8_t row_pattern, uint8_t current_column)
 {
-    static uint8_t previousColumn = 0;
-    pio_output_high (cols[previousColumn]);
-    for(int i = 0; i < 7; i++) {
-        if ((map[current_column] >> i) & 1)
+
+    pio_output_high(cols[prev_column]);
+
+
+    for (size_t current_row = 0; current_row < 7; current_row++)
+    {
+        if ((row_pattern >> current_row) & 1) 
         {
-            pio_output_low(rows[i]);
-        }
+            pio_output_low(rows[current_row]);  
+        } 
         else 
         {
-            pio_output_high(rows[i]);
+            pio_output_high(rows[current_row]); 
         }
     }
-
-    pio_output_low (cols[current_column]);
-    previousColumn = current_column;
-
+    pio_output_low(cols[current_column]);
+    
+    prev_column = current_column;
 }
 
 
@@ -128,13 +128,13 @@ void move(bool* placed, uint8_t ship, uint8_t shipNum)
 
 
 
-
 void place_ship(uint8_t ship, uint8_t shipNum) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
                 map[j] |= ship;
                 columns[shipNum] = j;
+                return;
             }
         }
     }
@@ -149,8 +149,9 @@ int main (void)
     reset ();
     system_init ();
     navswitch_init ();
-    pacer_init (50);
+    pacer_init (1000);
 
+    uint8_t current_column = 0;
     
     for (size_t i = 0; i < 7; i++)
     {
@@ -161,20 +162,23 @@ int main (void)
         pio_config_set(cols[i], PIO_OUTPUT_HIGH);
     }
 
-    uint8_t current_column = 0;
     while (1)
     {
-        if(current_column >= NUM_COLS -1) {
+        pacer_wait ();
+        displayMap(map[current_column], current_column);
+
+        current_column++;
+
+        if (current_column > 4)
+        {
             current_column = 0;
         }
-        pacer_wait ();
         if (!large_placed) {
             if (ship1) {
                 place_ship(large_ship, 0);
                 ship1 = !ship1;
             }
             move(&large_placed, large_ship, 0);
-            displayMap(column);
         } else if (!med_placed) {
             if (ship2){
                 reset();
@@ -182,7 +186,6 @@ int main (void)
                 ship2 = !ship2;
             }
             move(&med_placed, med_ship, 1);
-            displayMap(column);
         } else if (!small_placed) {
             if (ship3){
                 reset();
@@ -190,9 +193,7 @@ int main (void)
                 ship3 = !ship3;
             }
             move(&small_placed, small_ship, 2);
-            displayMap(column);
         }
-        current_column++;
     }
 }
 
