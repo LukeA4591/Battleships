@@ -65,6 +65,17 @@ bool collision_check(uint8_t ship, uint16_t newcolumn, uint16_t newrow)
     return false;
 }
 
+bool vert_collision_check(uint8_t shipNum, uint16_t newcolumn, uint16_t newrow)
+{
+    uint8_t mask = 0x01 << newrow;
+    for (int i = 0; i < shipNum; i++) {
+        if (((placedShips[i + newcolumn]) & mask) != 0x0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static uint8_t prev_column = 4;
 static void displayMap(uint8_t row_pattern, uint8_t current_column)
 {
@@ -94,29 +105,47 @@ uint8_t med_ship_vert[3] = {0x01, 0x01, 0x01};
 
 uint8_t small_ship_vert[2] = {0x01, 0x01};
 
-void flip (uint8_t shipNum, bool vert, uint8_t vert_ship[]) {
+void flip (uint8_t shipNum, uint8_t ship, bool vert, uint8_t vert_ship[], uint8_t row_lim, uint8_t col_lim) {
     for (int i = 0; i < NUM_COLS; i++) {
         map[i] = placedShips[i];
     }
     if (!vert) {
-        column = 0;
+        if (column > col_lim) {
+                column = col_lim;
+        }
+        while (!vert_collision_check(shipNum, column, row)) {
+            if (column > 0) {
+                column--;
+            } else {
+                if (row < 6) {
+                    row++;
+                } else {
+                    row = 0;
+                }
+            }
+        }
         for (int i = 0; i < shipNum; i++) {
             vert_ship[i] = (0x01 << row);
         }
         for (int i = 0; i < shipNum; i++) {
-            map[i] |= vert_ship[i];
+            map[i + column] |= vert_ship[i];
         }
     } else {
-        if (shipNum == 4) {
-            map[column] |= (large_ship << row);
-        } else if (shipNum == 3)
-        {
-            map[column] |= (med_ship << row);
-        } else if (shipNum == 2)
-        {
-            map[column] |= (small_ship << row);
+        if (row > row_lim) {
+            row = row_lim;
         }
-        
+        while(!collision_check(ship, column, row)) {
+            if (row > 0) {
+                row --;
+            } else {
+                if (column < 4) {
+                    column++;
+                } else {
+                    column = 0;
+                }
+            }
+        }
+        map[column] |= (ship << row);
     }
 }
 void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool* vert)
@@ -153,7 +182,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
                 column++;
             }
         } else {
-            if ((column < col_upper_lim)) {
+            if ((column < col_upper_lim) && vert_collision_check(shipNum, column + 1, row)) {
                 for (int i = 0; i < NUM_COLS; i++) {
                     map[i] = placedShips[i];
                 }
@@ -173,7 +202,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
             column--;
             }
         } else {
-            if ((column > col_lower_lim)) {
+            if ((column > col_lower_lim) && vert_collision_check(shipNum, column - 1, row)) {
                 for (int i = 0; i < NUM_COLS; i++) {
                     map[i] = placedShips[i];
                 }
@@ -194,7 +223,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
                 map[column] |= (ship << row);
             }
         } else {
-            if ((row > row_lower_lim)) {
+            if ((row > row_lower_lim) && vert_collision_check(shipNum, column, row - 1)) {
                 for (int i = 0; i < NUM_COLS; i++) {
                     map[i] = placedShips[i];
                 }
@@ -203,7 +232,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
                     vert_ship[i] = (0x01 << row);
                 }
                 for (int i = 0; i < shipNum; i++) {
-                    map[i] |= vert_ship[i];
+                    map[i + column] |= vert_ship[i];
                 }
             }
         }
@@ -216,7 +245,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
                 map[column] |= (ship << row);
             }
         } else {
-            if ((row < row_upper_lim)) {
+            if ((row < row_upper_lim) && vert_collision_check(shipNum, column, row + 1)) {
                 for (int i = 0; i < NUM_COLS; i++) {
                     map[i] = placedShips[i];
                 }
@@ -225,7 +254,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
                     vert_ship[i] = (0x01 << row);
                 }
                 for (int i = 0; i < shipNum; i++) {
-                    map[i] |= vert_ship[i];
+                    map[i + column] |= vert_ship[i];
                 }
             }
         }
@@ -248,7 +277,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
 
     if (button_pressed_p ())
     {
-        flip(shipNum, vertical, vert_ship);
+        flip(shipNum, ship, vertical, vert_ship, (row_upper_lim + 1) - shipNum, col_upper_lim - (shipNum - 1));
         *vert = !(*vert);
     }
 }
