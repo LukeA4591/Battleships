@@ -2,18 +2,24 @@
 #include "pio.h"
 #include "pacer.h"
 #include "navswitch.h"
+#include "button.h"
+#include "led.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 #define NUM_COLS 5
 #define NUM_ROWS 7
 
-uint16_t column;
-uint16_t row;
+static uint16_t column;
+static uint16_t row;
 bool large_placed = false;
 bool med_placed = false;
 bool small_placed = false;
+bool vertical = false;
+
+void place_ship(uint8_t ship);
 
 static const pio_t rows[] =
         {
@@ -81,6 +87,34 @@ static void displayMap(uint8_t row_pattern, uint8_t current_column)
     prev_column = current_column;
 }
 
+void flip (uint8_t shipNum, bool vert) {
+    if (!vert) {
+        uint16_t flipped[shipNum];
+        for (int i=0; i < shipNum; i++) {
+            flipped[i] = (0x01 << row);
+        }
+        for (int i = 0; i < NUM_COLS; i++) {
+            map[i] = placedShips[i];
+            if (i < shipNum) {
+                map[i] |= flipped[i];
+            }
+        }
+    } else {
+        uint8_t ship;
+        if (shipNum == 4) {
+            ship = large_ship;
+        } else if (shipNum == 3) {
+            ship = med_ship;
+        } else {
+            ship = small_ship;
+        }
+        
+        for (int i = 0; i < NUM_COLS; i++) {
+            map[i] = placedShips[i];
+        }
+        place_ship(ship);
+    }
+}
 
 void move(bool* placed, uint8_t ship, uint8_t shipNum)
 {
@@ -128,14 +162,22 @@ void move(bool* placed, uint8_t ship, uint8_t shipNum)
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH))
     {
-        placedShips[column] = ship << row;
+        placedShips[column] |= ship << row;
         *placed = !(*placed);
     }
+
+    if (button_pressed_p ())
+    {
+        vertical = !vertical;
+        flip(shipNum, vertical);
+    }
+
+
 }
 
 
 
-void place_ship(uint8_t ship, uint8_t shipNum) {
+void place_ship(uint8_t ship) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
@@ -158,6 +200,8 @@ int main (void)
     system_init ();
     navswitch_init ();
     pacer_init (1000);
+    led_init ();
+    button_init ();
 
     uint8_t current_column = 0;
     
@@ -174,30 +218,28 @@ int main (void)
     {
         pacer_wait ();
         displayMap(map[current_column], current_column);
-
         current_column++;
-
         if (current_column > 4)
         {
             current_column = 0;
         }
         if (!large_placed) {
             if (ship1) {
-                place_ship(large_ship, 0);
+                place_ship(large_ship);
                 ship1 = !ship1;
             }
-            move(&large_placed, large_ship, 0);
+            move(&large_placed, large_ship, 4);
         } else if (!med_placed) {
             if (ship2){
                 reset();
-                place_ship (med_ship, 1);
+                place_ship (med_ship);
                 ship2 = !ship2;
             }
-            move(&med_placed, med_ship, 1);
+            move(&med_placed, med_ship, 3);
         } else if (!small_placed) {
             if (ship3){
                 reset();
-                place_ship (small_ship, 2);
+                place_ship (small_ship);
                 ship3 = !ship3;
             }
             move(&small_placed, small_ship, 2);
