@@ -287,7 +287,7 @@ void place_ship(uint8_t ship) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
-                map[j] |= ship;
+                map[j] |= (ship << i);
                 column = j;
                 row = i;
                 return;
