@@ -55,23 +55,27 @@ bool collision_check(uint8_t ship, uint16_t newcolumn, uint16_t newrow)
     return false;
 }
 
-void displayMap(int current_column) {
-    for (int i = 0; i < NUM_COLS; i++) {
-        pio_output_high(cols[i]);
-    }
-    pio_output_low(cols[current_column]);
-    for (size_t current_row = 0; current_row < 7; current_row++)
-    {
-        if ((map[current_column] >> current_row) & 1)
+
+static void displayMap (uint8_t current_column)
+{
+    static uint8_t previousColumn = 0;
+    pio_output_high (cols[previousColumn]);
+    for(int i = 0; i < 7; i++) {
+        if ((map[current_column] >> i) & 1)
         {
-            pio_output_low(rows[current_row]);
+            pio_output_low(rows[i]);
         }
-        else
+        else 
         {
-            pio_output_high(rows[current_row]);
+            pio_output_high(rows[i]);
         }
     }
+
+    pio_output_low (cols[current_column]);
+    previousColumn = current_column;
+
 }
+
 
 void move(bool* placed, uint8_t ship, uint8_t shipNum)
 {
@@ -123,6 +127,8 @@ void move(bool* placed, uint8_t ship, uint8_t shipNum)
 }
 
 
+
+
 void place_ship(uint8_t ship, uint8_t shipNum) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
@@ -155,9 +161,12 @@ int main (void)
         pio_config_set(cols[i], PIO_OUTPUT_HIGH);
     }
 
-
+    uint8_t current_column = 0;
     while (1)
     {
+        if(current_column >= NUM_COLS -1) {
+            current_column = 0;
+        }
         pacer_wait ();
         if (!large_placed) {
             if (ship1) {
@@ -183,5 +192,7 @@ int main (void)
             move(&small_placed, small_ship, 2);
             displayMap(column);
         }
+        current_column++;
     }
 }
+
