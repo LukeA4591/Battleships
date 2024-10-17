@@ -81,7 +81,10 @@ static uint8_t placedShips[] =
         {
                 0x00, 0x00, 0x00, 0x00, 0x00
         };
-
+static uint8_t missileMap[] =
+        {
+                0x00, 0x00, 0x00, 0x00, 0x00
+        };
 
 
 void reset(void)
@@ -380,6 +383,46 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
     }
 }
 
+void moveMissile() {
+    displayMap(missileMap[current_column], current_column);
+    current_column++;
+    if (current_column > 4)
+    {
+        current_column = 0;
+    }
+    navswitch_update ();
+    if (navswitch_push_event_p (NAVSWITCH_EAST)){
+        if (column < 4) {
+            missileMap[column + 1] = missileMap[column];
+            missileMap[column] = 0x0;
+            prev_column = column;
+            column++;
+        }
+    }
+
+    if (navswitch_push_event_p (NAVSWITCH_WEST)) {
+        if (column > 0) {
+            missileMap[column - 1] = missileMap[column];
+            missileMap[column] = 0x0;
+            prev_column = column;
+            column--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
+        if (row > 0) {
+            missileMap[column] >>= 1;
+            row--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
+        if (row < 6) {
+            missileMap[column] <<= 1;
+            row++;
+        }
+    }
+
+}
+
 
 void place_ship_on_map(uint8_t ship) {
     for (size_t i = 0; i < 7; i++) {
@@ -424,48 +467,36 @@ void place_ships() {
     } else {
         if (turn == -1) {
             turn = 1;
-            ir_uart_putc ('0');
-            placingShips = false;
+            ir_uart_putc ('a');
+            game_state = SEND_MAP;
         } else {
-            ir_uart_putc ('z');
+            ir_uart_putc ('b');
             bothDone = true;
             game_state = SEND_MAP;
         }
     }
 }
 
-void list_to_string(char* output) {
-    for (int i = 0; i < NUM_COLS; i++) {
-        sprintf(&output[i * 2], "%02X", placedShips[i]); 
-    }
-    output[NUM_COLS * 2] = '\0'; 
-}
-
-void string_to_list(const char* input) {
-    for (int i = 0; i < NUM_COLS; i++) {
-        sscanf(&input[i * 2], "%2hhX", &placedShips[i]);
-    }
-}
-
-
 int main (void)
 {
-    char shipString[NUM_COLS * 2 + 1];
-    char mapString[NUM_COLS * 2 + 1];
+    //char shipString[NUM_COLS * 2 + 1];
+    //char mapString[NUM_COLS * 2 + 1];
     reset ();
     system_init ();
     navswitch_init ();
-    pacer_init (1000);
+    pacer_init (500);
     initLedMat ();
     button_init();
     ir_uart_init ();
 
+    /*
     tinygl_init (1000);
     tinygl_font_set (&font3x5_1);
     tinygl_text_speed_set (20);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
     tinygl_text("PLACE YOUR SHIPS");
+    */
 
     while (1)
     {
@@ -473,27 +504,35 @@ int main (void)
         if(game_state == PLACE_SHIPS) {
             if (ir_uart_read_ready_p () && !recieved) {
                 char chr = ir_uart_getc();
-                if (chr == '0') {
+                if (chr == 'a') {
                     turn = 0;
                     recieved = true;
                 }
             }
-            if (placingShips) {
-                place_ships();
-            } else {
-                if (ir_uart_read_ready_p ()) {
-                    char chr = ir_uart_getc();
-                    if (chr == 'z') {
-                        bothDone = true;
-                        game_state = SEND_MAP;
-                    }
+            place_ships();
+        } else if (game_state == SEND_MAP) {
+            if (ir_uart_read_ready_p ()) {
+                char chr = ir_uart_getc();
+                if (chr == 'b') {
+                    bothDone = true;
                 }
             }
-        } else if (game_state == SEND_MAP) {
-            list_to_string(shipString);
             if (bothDone) {
-                led_on ();
-            } 
+                if (turn == 0) {
+                    game_state = THEIR_TURN;
+                } else if (turn == 1)
+                {
+                    game_state = YOUR_TURN;
+                }
+                
+            }
+        } else if (game_state = YOUR_TURN) {
+            reset();
+            moveMissile();
+        } else if (game_state = THEIR_TURN) {
+
+        } else if (game_state = GAME_FINISHED) {
+            
         }
         
     }
