@@ -18,4 +18,3 @@ void button_init (void)
 {
     DDRD &= ~(1<<7);
 }
-

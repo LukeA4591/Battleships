@@ -7,6 +7,7 @@
 #include "tinygl.h"
 #include "../fonts/font3x5_1.h"
 #include "timer.h"
+#include "ir_uart.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -15,23 +16,27 @@
 #define NUM_ROWS 7
 
 typedef enum game_state
-{
-    START_SCREEN,                  
-    PLACE_SHIPS,              
-    GAME_RUNNING,
+{           
+    PLACE_SHIPS,
+    SEND_MAP,
+    YOUR_TURN,
+    THEIR_TURN,
     GAME_FINISHED
 
 } game_state_t;
 
-static game_state_t game_state = START_SCREEN;
+static game_state_t game_state = PLACE_SHIPS;
 
 uint8_t current_column = 0;
 static uint8_t prev_column = 4;
 static uint16_t column;
 static uint16_t row;
+bool bothDone = false;
+bool placingShips = true;
 bool ship1 = true;
 bool ship2 = true;
 bool ship3 = true;
+bool recieved = false;
 bool large_placed = false;
 bool med_placed = false;
 bool small_placed = false;
@@ -49,6 +54,8 @@ uint8_t col_lower_lim = 0;
 uint8_t row_lower_lim = 0;
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
+
+int8_t turn = -1;
 
 void place_ship(uint8_t ship);
 
@@ -74,7 +81,10 @@ static uint8_t placedShips[] =
         {
                 0x00, 0x00, 0x00, 0x00, 0x00
         };
-
+static uint8_t missileMap[] =
+        {
+                0x01, 0x00, 0x00, 0x00, 0x00
+        };
 
 
 void reset(void)
@@ -373,6 +383,44 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
     }
 }
 
+void moveMissile(void) {
+    displayMap(missileMap[current_column], current_column);
+    current_column++;
+    if (current_column > 4)
+    {
+        current_column = 0;
+    }
+    navswitch_update ();
+    if (navswitch_push_event_p (NAVSWITCH_EAST)){
+        if (column < 4) {
+            missileMap[column + 1] = missileMap[column];
+            missileMap[column] = 0x0;
+            column++;
+        }
+    }
+
+    if (navswitch_push_event_p (NAVSWITCH_WEST)) {
+        if (column > 0) {
+            missileMap[column - 1] = missileMap[column];
+            missileMap[column] = 0x0;
+            column--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
+        if (row > 0) {
+            missileMap[column] >>= 1;
+            row--;
+        }
+    }
+    if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
+        if (row < 6) {
+            missileMap[column] <<= 1;
+            row++;
+        }
+    }
+
+}
+
 
 void place_ship_on_map(uint8_t ship) {
     for (size_t i = 0; i < 7; i++) {
@@ -387,59 +435,103 @@ void place_ship_on_map(uint8_t ship) {
     }
 }
 
+void place_ships(void) {
+    displayMap(map[current_column], current_column);
+    current_column++;
+    if (current_column > 4)
+    {
+        current_column = 0;
+    }
+    if (!large_placed) {
+        if (ship1) {
+            place_ship_on_map (large_ship);
+            ship1 = !ship1;
+        }
+        move(&large_placed, large_ship, large_ship_vert, 4, &vertical);
+    } else if (!med_placed) {
+        if (ship2){
+            reset();
+            place_ship_on_map (med_ship);
+            ship2 = !ship2;
+        }
+        move(&med_placed, med_ship, med_ship_vert, 3, &vertical);
+    } else if (!small_placed) {
+        if (ship3){
+            reset();
+            place_ship_on_map (small_ship);
+            ship3 = !ship3;
+        }
+        move(&small_placed, small_ship, small_ship_vert, 2, &vertical);
+    } else {
+        if (turn == -1) {
+            turn = 1;
+            ir_uart_putc ('a');
+            game_state = SEND_MAP;
+        } else {
+            ir_uart_putc ('b');
+            bothDone = true;
+            game_state = SEND_MAP;
+        }
+    }
+}
+
 int main (void)
 {
+    //char shipString[NUM_COLS * 2 + 1];
+    //char mapString[NUM_COLS * 2 + 1];
     reset ();
     system_init ();
     navswitch_init ();
-    pacer_init (1000);
+    pacer_init (500);
     initLedMat ();
     button_init();
+    ir_uart_init ();
 
+    /*
     tinygl_init (1000);
     tinygl_font_set (&font3x5_1);
     tinygl_text_speed_set (20);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
     tinygl_text("PLACE YOUR SHIPS");
+    */
 
     while (1)
     {
         pacer_wait ();
+        if(game_state == PLACE_SHIPS) {
+            if (ir_uart_read_ready_p () && !recieved) {
+                char chr = ir_uart_getc();
+                if (chr == 'a') {
+                    turn = 0;
+                    recieved = true;
+                }
+            }
+            place_ships();
+        } else if (game_state == SEND_MAP) {
+            if (ir_uart_read_ready_p ()) {
+                char chr = ir_uart_getc();
+                if (chr == 'b') {
+                    bothDone = true;
+                }
+            }
+            if (bothDone) {
+                if (turn == 0) {
+                    game_state = THEIR_TURN;
+                } else if (turn == 1)
+                {
+                    game_state = YOUR_TURN;
 
-        // if(game_state == START_SCREEN) {
-        //     tinygl_update();
-        // }
+                }
+                
+            }
+        } else if (game_state == YOUR_TURN) {
+            moveMissile();
+        } else if (game_state == THEIR_TURN) {
 
-
-    
-
-        displayMap(map[current_column], current_column);
-        current_column++;
-        if (current_column > 4)
-        {
-            current_column = 0;
+        } else if (game_state == GAME_FINISHED) {
+            
         }
-        if (!large_placed) {
-            if (ship1) {
-                place_ship_on_map (large_ship);
-                ship1 = !ship1;
-            }
-            move(&large_placed, large_ship, large_ship_vert, 4, &vertical);
-        } else if (!med_placed) {
-            if (ship2){
-                reset();
-                place_ship_on_map (med_ship);
-                ship2 = !ship2;
-            }
-            move(&med_placed, med_ship, med_ship_vert, 3, &vertical);
-        } else if (!small_placed) {
-            if (ship3){
-                reset();
-                place_ship_on_map (small_ship);
-                ship3 = !ship3;
-            }
-            move(&small_placed, small_ship, small_ship_vert, 2, &vertical);
-        }
+        
     }
 }
