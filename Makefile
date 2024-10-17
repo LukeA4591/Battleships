@@ -67,10 +67,22 @@ usart1.o: ../../drivers/avr/usart1.c ../../drivers/avr/system.h ../../drivers/av
 prescale.o: ../../drivers/avr/prescale.c ../../drivers/avr/prescale.h ../../drivers/avr/system.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+map.o: map.c map.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+move.o: move.c move.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+flipship.o: flipship.c flipship.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+position.o: position.c position.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
 
 
 # Link: create ELF output file from object files.
-game.out: game.o system.o pio.o timer.o button.o display.o ledmat.o font.o pacer.o navswitch.o tinygl.o ir_uart.o led.o timer0.o usart1.o prescale.o
+game.out: game.o system.o pio.o timer.o button.o display.o ledmat.o font.o pacer.o navswitch.o tinygl.o ir_uart.o led.o timer0.o usart1.o prescale.o map.o move.o flipship.o position.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
