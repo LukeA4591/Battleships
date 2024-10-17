@@ -83,7 +83,7 @@ static uint8_t placedShips[] =
         };
 static uint8_t missileMap[] =
         {
-                0x00, 0x00, 0x00, 0x00, 0x00
+                0x01, 0x00, 0x00, 0x00, 0x00
         };
 
 
@@ -383,7 +383,7 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
     }
 }
 
-void moveMissile() {
+void moveMissile(void) {
     displayMap(missileMap[current_column], current_column);
     current_column++;
     if (current_column > 4)
@@ -395,7 +395,6 @@ void moveMissile() {
         if (column < 4) {
             missileMap[column + 1] = missileMap[column];
             missileMap[column] = 0x0;
-            prev_column = column;
             column++;
         }
     }
@@ -404,7 +403,6 @@ void moveMissile() {
         if (column > 0) {
             missileMap[column - 1] = missileMap[column];
             missileMap[column] = 0x0;
-            prev_column = column;
             column--;
         }
     }
@@ -437,7 +435,7 @@ void place_ship_on_map(uint8_t ship) {
     }
 }
 
-void place_ships() {
+void place_ships(void) {
     displayMap(map[current_column], current_column);
     current_column++;
     if (current_column > 4)
@@ -523,15 +521,15 @@ int main (void)
                 } else if (turn == 1)
                 {
                     game_state = YOUR_TURN;
+
                 }
                 
             }
-        } else if (game_state = YOUR_TURN) {
-            reset();
+        } else if (game_state == YOUR_TURN) {
             moveMissile();
-        } else if (game_state = THEIR_TURN) {
+        } else if (game_state == THEIR_TURN) {
 
-        } else if (game_state = GAME_FINISHED) {
+        } else if (game_state == GAME_FINISHED) {
             
         }
         
