@@ -31,9 +31,12 @@ uint8_t current_column = 0;
 static uint8_t prev_column = 4;
 static uint16_t column;
 static uint16_t row;
+bool bothDone = false;
+bool placingShips = true;
 bool ship1 = true;
 bool ship2 = true;
 bool ship3 = true;
+bool recieved = false;
 bool large_placed = false;
 bool med_placed = false;
 bool small_placed = false;
@@ -421,7 +424,11 @@ void place_ships() {
     } else {
         if (turn == -1) {
             turn = 1;
-            ir_uart_putc (0);
+            ir_uart_putc ('0');
+            placingShips = false;
+        } else {
+            ir_uart_putc ('z');
+            bothDone = true;
             game_state = SEND_MAP;
         }
     }
@@ -443,7 +450,8 @@ void string_to_list(const char* input) {
 
 int main (void)
 {
-    bool recieved = false;
+    char shipString[NUM_COLS * 2 + 1];
+    char mapString[NUM_COLS * 2 + 1];
     reset ();
     system_init ();
     navswitch_init ();
@@ -465,14 +473,25 @@ int main (void)
         if(game_state == PLACE_SHIPS) {
             if (ir_uart_read_ready_p () && !recieved) {
                 char chr = ir_uart_getc();
-                if (chr == 0) {
-                    turn = chr;
+                if (chr == '0') {
+                    turn = 0;
                     recieved = true;
                 }
             }
-            place_ships();
+            if (placingShips) {
+                place_ships();
+            } else {
+                if (ir_uart_read_ready_p ()) {
+                    char chr = ir_uart_getc();
+                    if (chr == 'z') {
+                        bothDone = true;
+                        game_state = SEND_MAP;
+                    }
+                }
+            }
         } else if (game_state == SEND_MAP) {
-            if (recieved || turn == 1) {
+            list_to_string(shipString);
+            if (bothDone) {
                 led_on ();
             } 
         }
