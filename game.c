@@ -25,7 +25,7 @@ typedef enum game_state
 
 } game_state_t;
 
-static game_state_t game_state = PLACE_SHIPS;
+static game_state_t game_state = YOUR_TURN;
 
 uint8_t current_column = 0;
 static uint8_t prev_column = 4;
@@ -79,7 +79,7 @@ static uint8_t map[] =
 
 static uint8_t placedShips[] = 
         {
-                0x00, 0x00, 0x00, 0x00, 0x00
+                0x00, 0x00, 0x00, 0x00, 0x00 //temp
         };
 static uint8_t missileMap[] =
         {
@@ -382,6 +382,69 @@ void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool
         *vert = !(*vert);
     }
 }
+void switch_turns() {
+    if(game_state == YOUR_TURN) {
+        game_state = THEIR_TURN;
+        led_on();
+    }
+    else if(game_state == THEIR_TURN) {
+        game_state = YOUR_TURN;
+        led_on();
+    
+    }
+
+    //resetMap();
+    //reset();
+}
+
+//Send position to opponent, opponent returns true 0 for miss, 1 for hit
+char shootMissile(uint8_t column, uint8_t row) {
+    char position = (row << 4) | (column & 0x0F); //encode column and row into single char
+    ir_uart_putc(position);
+
+    while(!ir_uart_read_ready_p()) {
+    }
+    return ir_uart_getc();
+    
+
+
+    
+}
+
+//opponent will wait for a bomb and return whether it is a hit or not
+void receiving_bombs() {
+
+    char position = 'a';
+
+    if(ir_uart_read_ready_p()) {
+        position = ir_uart_getc();
+        if(position == 'T') {
+            switch_turns();
+            return;
+        }
+        if(position != 'a') {
+            
+            uint8_t column = (position >> 4) & 0x0F;
+            uint8_t row =  position & 0x0F;
+
+            
+            if((placedShips[column] >> row) & 1) {
+                ir_uart_putc('1');
+            }
+            else {
+                ir_uart_putc('0');
+            }
+
+            switch_turns();
+
+        }
+
+    
+    }
+    
+    
+}
+     
 
 void moveMissile(void) {
     displayMap(missileMap[current_column], current_column);
@@ -418,6 +481,25 @@ void moveMissile(void) {
             row++;
         }
     }
+
+    //Shoot ship
+    if(navswitch_push_event_p(NAVSWITCH_PUSH)) {
+        char shoot = shootMissile(column, row);
+        if(shoot == '1') { //hit
+            missileMap[column] |= (1 << row); //update hits
+            switch_turns();
+            ir_uart_putc('T');
+
+        }
+        else if(shoot == '0') { //miss
+            switch_turns();
+            ir_uart_putc('T');
+        }
+        else {
+            //IR error. Continues loop
+        }
+        
+        }
 
 }
 
@@ -527,8 +609,10 @@ int main (void)
             }
         } else if (game_state == YOUR_TURN) {
             moveMissile();
+            //led_on();
         } else if (game_state == THEIR_TURN) {
-
+            receiving_bombs();
+            //led_off();
         } else if (game_state == GAME_FINISHED) {
             
         }
