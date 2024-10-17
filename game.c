@@ -7,6 +7,7 @@
 #include "tinygl.h"
 #include "../fonts/font3x5_1.h"
 #include "timer.h"
+#include "ir_uart.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -51,7 +52,7 @@ uint8_t row_lower_lim = 0;
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
 
-uint8_t turn = -1;
+int8_t turn = -1;
 
 void place_ship(uint8_t ship);
 
