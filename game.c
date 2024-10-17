@@ -4,13 +4,27 @@
 #include "navswitch.h"
 #include "button.h"
 #include "led.h"
+#include "tinygl.h"
+#include "../fonts/font3x5_1.h"
+#include "timer.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-
 #define NUM_COLS 5
 #define NUM_ROWS 7
+
+typedef enum game_state
+{           
+    PLACE_SHIPS,
+    SEND_MAP,
+    YOUR_TURN,
+    THEIR_TURN,
+    GAME_FINISHED
+
+} game_state_t;
+
+static game_state_t game_state = PLACE_SHIPS;
 
 uint8_t current_column = 0;
 static uint8_t prev_column = 4;
@@ -36,6 +50,8 @@ uint8_t col_lower_lim = 0;
 uint8_t row_lower_lim = 0;
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
+
+uint8_t turn = -1;
 
 void place_ship(uint8_t ship);
 
@@ -374,45 +390,91 @@ void place_ship_on_map(uint8_t ship) {
     }
 }
 
+void place_ships() {
+    displayMap(map[current_column], current_column);
+    current_column++;
+    if (current_column > 4)
+    {
+        current_column = 0;
+    }
+    if (!large_placed) {
+        if (ship1) {
+            place_ship_on_map (large_ship);
+            ship1 = !ship1;
+        }
+        move(&large_placed, large_ship, large_ship_vert, 4, &vertical);
+    } else if (!med_placed) {
+        if (ship2){
+            reset();
+            place_ship_on_map (med_ship);
+            ship2 = !ship2;
+        }
+        move(&med_placed, med_ship, med_ship_vert, 3, &vertical);
+    } else if (!small_placed) {
+        if (ship3){
+            reset();
+            place_ship_on_map (small_ship);
+            ship3 = !ship3;
+        }
+        move(&small_placed, small_ship, small_ship_vert, 2, &vertical);
+    } else {
+        if (turn == -1) {
+            turn = 1;
+            ir_uart_putc (0);
+            game_state = SEND_MAP;
+        }
+    }
+}
+
+void list_to_string(char* output) {
+    for (int i = 0; i < NUM_COLS; i++) {
+        sprintf(&output[i * 2], "%02X", placedShips[i]); 
+    }
+    output[NUM_COLS * 2] = '\0'; 
+}
+
+void string_to_list(const char* input) {
+    for (int i = 0; i < NUM_COLS; i++) {
+        sscanf(&input[i * 2], "%2hhX", &placedShips[i]);
+    }
+}
+
+
 int main (void)
 {
+    bool recieved = false;
     reset ();
     system_init ();
     navswitch_init ();
     pacer_init (1000);
-    led_init ();
-    button_init ();
     initLedMat ();
+    button_init();
+    ir_uart_init ();
+
+    tinygl_init (1000);
+    tinygl_font_set (&font3x5_1);
+    tinygl_text_speed_set (20);
+    tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
+    tinygl_text("PLACE YOUR SHIPS");
 
     while (1)
     {
         pacer_wait ();
-        displayMap(map[current_column], current_column);
-        current_column++;
-        if (current_column > 4)
-        {
-            current_column = 0;
+        if(game_state == PLACE_SHIPS) {
+            if (ir_uart_read_ready_p () && !recieved) {
+                char chr = ir_uart_getc();
+                if (chr == 0) {
+                    turn = chr;
+                    recieved = true;
+                }
+            }
+            place_ships();
+        } else if (game_state == SEND_MAP) {
+            if (recieved || turn == 1) {
+                led_on ();
+            } 
         }
-        if (!large_placed) {
-            if (ship1) {
-                place_ship_on_map (large_ship);
-                ship1 = !ship1;
-            }
-            move(&large_placed, large_ship, large_ship_vert, 4, &vertical);
-        } else if (!med_placed) {
-            if (ship2){
-                reset();
-                place_ship_on_map (med_ship);
-                ship2 = !ship2;
-            }
-            move(&med_placed, med_ship, med_ship_vert, 3, &vertical);
-        } else if (!small_placed) {
-            if (ship3){
-                reset();
-                place_ship_on_map (small_ship);
-                ship3 = !ship3;
-            }
-            move(&small_placed, small_ship, small_ship_vert, 2, &vertical);
-        }
+        
     }
 }
