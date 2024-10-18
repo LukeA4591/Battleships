@@ -37,4 +37,3 @@ void resetMap(void) {
         map[i] = placedShips[i];
     }
 }
-

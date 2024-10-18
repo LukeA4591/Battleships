@@ -13,6 +13,11 @@
 #include "move.h"
 #include "position.h"
 #include "initmove.h"
+#include "missile.h"
+#include "gamestate.h"
+#include "placeships.h"
+#include "mapfunctions.h"
+#include "send.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -20,46 +25,19 @@
 #define NUM_COLS 5
 #define NUM_ROWS 7
 
-typedef enum game_state
-{           
-    PLACE_SHIPS,
-    SEND_MAP,
-    YOUR_TURN,
-    THEIR_TURN,
-    GAME_FINISHED
-
-} game_state_t;
-
 static game_state_t game_state = PLACE_SHIPS;
 
 uint8_t current_column = 0;
 uint8_t hits = 0;
-static uint8_t prev_column = 4;
-uint8_t largeShipNum = 4;
-uint8_t medShipNum = 3;
-uint8_t smallShipNum = 2;
 
 position_t position;
 
 bool bothDone = false;
 bool placingShips = true;
-bool ship1 = true;
-bool ship2 = true;
-bool ship3 = true;
 bool recieved = false;
-bool large_placed = false;
-bool med_placed = false;
-bool small_placed = false;
 bool launch = true;
 bool switch_on = false;
 
-uint8_t large_ship_vert[4] = {0x01, 0x01, 0x01, 0x01};
-uint8_t med_ship_vert[3] = {0x01, 0x01, 0x01};
-uint8_t small_ship_vert[2] = {0x01, 0x01};
-
-static uint8_t large_ship = 0x0F;
-static uint8_t med_ship = 0x07;
-static uint8_t small_ship = 0x03;
 static uint8_t missile = 0x01;
 
 uint8_t col_upper_lim;
@@ -68,60 +46,6 @@ uint8_t row_upper_lim;
 int8_t turn = -1;
 
 void place_ship(uint8_t ship);
-
-static const pio_t rows[] =
-        {
-                LEDMAT_ROW1_PIO, LEDMAT_ROW2_PIO, LEDMAT_ROW3_PIO,
-                LEDMAT_ROW4_PIO, LEDMAT_ROW5_PIO, LEDMAT_ROW6_PIO,
-                LEDMAT_ROW7_PIO
-        };
-
-static const pio_t cols[] =
-        {
-                LEDMAT_COL1_PIO, LEDMAT_COL2_PIO, LEDMAT_COL3_PIO,
-                LEDMAT_COL4_PIO, LEDMAT_COL5_PIO
-        };
-
-
-
-
-
-void initLedMat(void) {
-    for (size_t i = 0; i < 7; i++)
-    {
-        pio_config_set(rows[i], PIO_OUTPUT_HIGH);
-    }
-    for (size_t i = 0; i < 5; i++)
-    {
-        pio_config_set(cols[i], PIO_OUTPUT_HIGH);
-    }
-}
-
-
-static void displayMap(uint8_t row_pattern, uint8_t current_column)
-{
-    pio_output_high(cols[prev_column]);
-    for (size_t current_row = 0; current_row < 7; current_row++) {
-        if ((row_pattern >> current_row) & 1) {
-            pio_output_low(rows[current_row]);  
-        } 
-        else {
-            pio_output_high(rows[current_row]); 
-        }
-    }
-    pio_output_low(cols[current_column]);
-    prev_column = current_column;
-}
-
-void send (char chr) {
-    ir_uart_putc(chr);  
-}
-
-//Send position to opponent, opponent returns true 0 for miss, 1 for hit
-void shootMissile(void) {
-    char pos = (position.row << 4) | (position.column & 0x0F); //encode column and row into single char
-    send (pos);
-}
 
 //opponent will wait for a bomb and return whether it is a hit or not
 void receiving_bombs(void) {
@@ -145,103 +69,6 @@ void check_bomb(char position) {
 
 }
 
-
-void moveMissile(void) {
-    displayMap(missileMap[current_column], current_column);
-    current_column++;
-    if (current_column > 4)
-    {
-        current_column = 0;
-    }
-    navswitch_update ();
-    if (navswitch_push_event_p (NAVSWITCH_EAST)){
-        if ((position.column < 4) && collision_check(missile, position.column + 1, position.row, missileMap)) {
-            missileMap[position.column + 1] |= (0x01 << position.row);
-            missileMap[position.column] ^= (0x01 << position.row);
-            position.column++;
-        }
-    }
-
-    if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-        if ((position.column > 0) && collision_check(missile, position.column - 1, position.row, missileMap)) {
-            missileMap[position.column - 1] |= (0x01 << position.row);
-            missileMap[position.column] ^= (0x01 << position.row);
-            position.column--;
-        }
-    }
-    if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-        if ((position.row > 0) && collision_check(missile, position.column, position.row - 1, missileMap)) {
-            missileMap[position.column] ^= (0x01 << position.row);
-            position.row--;
-            missileMap[position.column] |= (0x01 << position.row);
-        }
-    }
-    if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-        if ((position.row < 6) && collision_check(missile, position.column, position.row + 1, missileMap)) {
-            missileMap[position.column] ^= (0x01 << position.row);
-            position.row++;
-            missileMap[position.column] |= (0x01 << position.row);
-        }
-    }
-
-    if(navswitch_push_event_p(NAVSWITCH_PUSH)) {
-        shootMissile();
-    }
-}
-
-
-void place_ship_on_map(uint8_t ship, uint8_t map[]) {
-    for (size_t i = 0; i < 7; i++) {
-        for (size_t j = 0; j < 5; j++){
-            if ((map[j] & (ship << i)) == 0) {
-                map[j] |= (ship << i);
-                position.column = j;
-                position.row = i;
-                return;
-            }
-        }
-    }
-}
-
-void place_ships(void) {
-    displayMap(map[current_column], current_column);
-    current_column++;
-    if (current_column > NUM_COLS - 1)
-    {
-        current_column = 0;
-    }
-    if (!large_placed) {
-        if (ship1) {
-            place_ship_on_map (large_ship, map);
-            ship1 = !ship1;
-        }
-        move(&large_placed, large_ship, large_ship_vert, largeShipNum, &position);
-    } else if (!med_placed) {
-        if (ship2){
-            reset(&position);
-            place_ship_on_map (med_ship, map);
-            ship2 = !ship2;
-        }
-        move(&med_placed, med_ship, med_ship_vert, medShipNum, &position);
-    } else if (!small_placed) {
-        if (ship3){
-            reset(&position);
-            place_ship_on_map (small_ship, map);
-            ship3 = !ship3;
-        }
-        move(&small_placed, small_ship, small_ship_vert, smallShipNum, &position);
-    } else {
-        if (turn == -1) {
-            turn = 1;
-            send ('a');
-            game_state = SEND_MAP;
-        } else {
-            send ('b');
-            bothDone = true;
-            game_state = SEND_MAP;
-        }
-    }
-}
 
 void finishGame(void) {
     tinygl_font_set (&font5x7_1);
@@ -275,7 +102,7 @@ int main (void)
                         recieved = true;
                     }
                 }
-                place_ships();
+                place_ships(&position, current_column, &turn, &game_state, &bothDone);
                 break;
             case SEND_MAP:
                 displayMap(placedShips[current_column], current_column);
@@ -299,7 +126,7 @@ int main (void)
 
             case YOUR_TURN:
                 if (launch) {
-                    place_ship_on_map (missile, missileMap);
+                    place_ship_on_map (missile, missileMap, &position);
                     launch = !launch;
                 }
 
@@ -313,10 +140,10 @@ int main (void)
                         if (hits == 9) {
                             finishGame();
                         }
-                        place_ship_on_map (missile, missileMap);
+                        place_ship_on_map (missile, missileMap, &position);
                     } 
                 }
-                moveMissile();
+                moveMissile(&position, missile, current_column);
                 break;
 
             case THEIR_TURN:
