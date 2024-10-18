@@ -69,5 +69,11 @@ void placeShips(position_t* pos, int8_t* turn, game_state_t* game_state, bool* b
             *bothDone = true;
             *game_state = SEND_MAP;
         }
+        ship1 = true;
+        ship2 = true;
+        ship3 = true;
+        large_placed = false;
+        med_placed = false;
+        small_placed = false;
     }
 }

@@ -6,6 +6,8 @@
 #include <mapfunctions.h>
 #include <stddef.h>
 #include "pio.h"
+#include "map.h"
+#define NUM_COLS 5
 
 static const pio_t rows[] =
         {
@@ -23,7 +25,6 @@ static const pio_t cols[] =
 
 
 static uint8_t prev_column = 4;
-
 
 /**
 Initialises the LedMat, all LEDs off
@@ -70,5 +71,13 @@ void placeObjectOnMap(uint8_t ship, uint8_t map[], position_t* pos) {
                 return;
             }
         }
+    }
+}
+
+void resetMaps(void) {
+    for (int i = 0; i < NUM_COLS; i++) {
+        map[i] = 0;
+        placedShips[i] = 0;
+        missileMap[i] = 0;
     }
 }

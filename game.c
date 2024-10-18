@@ -5,31 +5,22 @@
 
 
 #include "system.h"
-#include "pio.h"
 #include "pacer.h"
 #include "navswitch.h"
 #include "button.h"
-#include "led.h"
 #include "tinygl.h"
 #include "../fonts/font3x5_1.h"
 #include "timer.h"
 #include "ir_uart.h"
 #include "map.h"
-#include "flipship.h"
-#include "move.h"
 #include "position.h"
-#include "initmove.h"
 #include "missile.h"
 #include "gamestate.h"
 #include "placeships.h"
 #include "mapfunctions.h"
 #include "send.h"
-#include <stddef.h>
-#include <stdio.h>
 #include <stdbool.h>
-#include <math.h>
 #define NUM_COLS 5
-#define NUM_ROWS 7
 
 static game_state_t game_state = START_SCREEN;
 
@@ -39,7 +30,6 @@ uint8_t hits = 0;
 position_t position;
 
 bool bothDone = false;
-bool placingShips = true;
 bool recieved = false;
 bool launch = true;
 
@@ -108,7 +98,12 @@ Waits for navigation switch to be pushed before starting game
 void waitToStart(void) {
     navswitch_update ();
     if(navswitch_push_event_p(NAVSWITCH_PUSH)) {
+        recieved = false;
+        resetMaps();
+        reset(&position);
         game_state = PLACE_SHIPS;
+        bothDone = false;
+        playerOne = -1;
     }
 }
 
@@ -151,10 +146,10 @@ int main (void)
                 }
                 if (bothDone) {
                     if (playerOne == 0) {
-                    game_state = THEIR_TURN;
-                } else if (playerOne == 1) {
-                    game_state = YOUR_TURN;
-                }
+                        game_state = THEIR_TURN;
+                    } else if (playerOne == 1) {
+                        game_state = YOUR_TURN;
+                    }
                 }
                 break;
 

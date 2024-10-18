@@ -24,4 +24,9 @@ Places the ship on the currently displayed map
  */
 void displayMap(uint8_t row_pattern, uint8_t current_column);
 
+/**
+Resets the maps to play again
+ */
+void resetMaps(void);
+
 #endif

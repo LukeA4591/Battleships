@@ -1,3 +1,7 @@
+ENCE260 - Group 345
+
+Authors: Tyla Holmes, Luke Armstrong
+
 Battleships
 
 
