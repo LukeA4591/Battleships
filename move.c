@@ -1,6 +1,7 @@
 #include "move.h"
 #include "map.h"
 #include "position.h"
+#include "initmove.h"
 
 #define col_lower_lim 0
 #define row_lower_lim 0

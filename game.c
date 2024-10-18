@@ -12,6 +12,7 @@
 #include "flipship.h"
 #include "move.h"
 #include "position.h"
+#include "initmove.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -34,10 +35,12 @@ static game_state_t game_state = PLACE_SHIPS;
 uint8_t current_column = 0;
 uint8_t hits = 0;
 static uint8_t prev_column = 4;
+uint8_t largeShipNum = 4;
+uint8_t medShipNum = 3;
+uint8_t smallShipNum = 2;
 
 position_t position;
 
-char prev_packet;
 bool bothDone = false;
 bool placingShips = true;
 bool ship1 = true;
@@ -59,11 +62,8 @@ static uint8_t med_ship = 0x07;
 static uint8_t small_ship = 0x03;
 static uint8_t missile = 0x01;
 
-uint8_t col_lower_lim = 0;
-uint8_t row_lower_lim = 0;
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
-uint8_t count = 0;
 
 int8_t turn = -1;
 
@@ -113,75 +113,8 @@ static void displayMap(uint8_t row_pattern, uint8_t current_column)
     prev_column = current_column;
 }
 
-void setLims(void) {
-    if (!position.vertical) {
-        col_upper_lim = 4;
-        if (!large_placed) {
-            row_upper_lim = 3;
-        } else if (!med_placed) {
-            row_upper_lim = 4;
-        } else {
-            row_upper_lim = 5;
-        }
-    } else {
-        row_upper_lim = 6;
-        if (!large_placed) {
-            col_upper_lim = 1;
-        } else if (!med_placed) {
-            col_upper_lim = 2;
-        } else {
-            col_upper_lim = 3;
-        }
-    }   
-}
-
-void placeShip(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum) {
-    if (!(position.vertical)) {
-        placedShips[position.column] |= ship << position.row;
-    } else {
-        for (int i = 0; i < shipNum; i++) {
-            vert_ship[i] = (0x01 << position.row);
-            placedShips[i + position.column] |= vert_ship[i];
-        }
-    }
-    *placed = !(*placed);
-}
-
-void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, bool* vert)
-{
-    setLims ();
-    navswitch_update ();
-    if (navswitch_push_event_p (NAVSWITCH_EAST)) { 
-        down(col_upper_lim, ship, vert_ship, shipNum, &position);
-    }
-    if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-        up(ship, vert_ship, shipNum, &position);
-    }
-    if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-        left(ship, vert_ship, shipNum, &position);
-    }
-    if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-        right(row_upper_lim, ship, vert_ship, shipNum, &position);
-        
-    }
-
-    if (navswitch_push_event_p (NAVSWITCH_PUSH))
-    {
-        placeShip(placed, ship, vert_ship, shipNum);
-    }
-
-    if (button_pressed_p ())
-    {
-        flip(shipNum, ship, position.vertical, vert_ship, (row_upper_lim + 1) - shipNum, col_upper_lim - (shipNum - 1), position.column, position.row);
-        *vert = !(*vert);
-    }
-}
-
 void send (char chr) {
-    //prev_packet = chr;
-    //uint8_t checksum = chr^0xFF;
     ir_uart_putc(chr);  
-    //ir_uart_putc(checksum); 
 }
 
 //Send position to opponent, opponent returns true 0 for miss, 1 for hit
@@ -198,25 +131,6 @@ void receiving_bombs(void) {
     {
         current_column = 0;
     }
-    /*
-    char position;
-    if(ir_uart_read_ready_p()) {
-        position = ir_uart_getc();
-        if(((position >> 4) & 0x0F < 5) || (position & 0x0F) < 7) {
-            
-            uint8_t column = (position >> 4) & 0x0F;
-            uint8_t row =  position & 0x0F;
-, position_t* pos
-            
-            if((placedShips[column] >> row) & 1) {
-                ir_uart_putc('1');
-            }
-            else {
-                ir_uart_putc('0');
-            }
-        }
-    }
-    */
 }
 
 void check_bomb(char position) {
@@ -292,7 +206,7 @@ void place_ship_on_map(uint8_t ship, uint8_t map[]) {
 void place_ships(void) {
     displayMap(map[current_column], current_column);
     current_column++;
-    if (current_column > 4)
+    if (current_column > NUM_COLS - 1)
     {
         current_column = 0;
     }
@@ -301,21 +215,21 @@ void place_ships(void) {
             place_ship_on_map (large_ship, map);
             ship1 = !ship1;
         }
-        move(&large_placed, large_ship, large_ship_vert, 4, &position.vertical);
+        move(&large_placed, large_ship, large_ship_vert, largeShipNum, &position);
     } else if (!med_placed) {
         if (ship2){
             reset(&position);
             place_ship_on_map (med_ship, map);
             ship2 = !ship2;
         }
-        move(&med_placed, med_ship, med_ship_vert, 3, &position.vertical);
+        move(&med_placed, med_ship, med_ship_vert, medShipNum, &position);
     } else if (!small_placed) {
         if (ship3){
             reset(&position);
             place_ship_on_map (small_ship, map);
             ship3 = !ship3;
         }
-        move(&small_placed, small_ship, small_ship_vert, 2, &position.vertical);
+        move(&small_placed, small_ship, small_ship_vert, smallShipNum, &position);
     } else {
         if (turn == -1) {
             turn = 1;
