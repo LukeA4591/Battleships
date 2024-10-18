@@ -42,7 +42,6 @@ bool bothDone = false;
 bool placingShips = true;
 bool recieved = false;
 bool launch = true;
-bool switch_on = false;
 
 static uint8_t missile = 0x01;
 
@@ -183,6 +182,7 @@ int main (void)
                 break;
             case GAME_FINISHED:
                 tinygl_update();
+                waitToStart();
                 break;
             case START_SCREEN:
                 tinygl_update();
