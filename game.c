@@ -197,7 +197,7 @@ void moveMissile(void) {
 }
 
 
-void place_ship_on_map(uint8_t ship, uint8_t map[]) {
+void placeShipOnMap(uint8_t ship, uint8_t map[]) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
@@ -210,7 +210,7 @@ void place_ship_on_map(uint8_t ship, uint8_t map[]) {
     }
 }
 
-void place_ships(void) {
+void placeShips(void) {
     displayMap(map[current_column], current_column);
     current_column++;
     if (current_column > NUM_COLS - 1)
@@ -219,21 +219,21 @@ void place_ships(void) {
     }
     if (!large_placed) {
         if (ship1) {
-            place_ship_on_map (large_ship, map);
+            placeShipOnMap (large_ship, map);
             ship1 = !ship1;
         }
         move(&large_placed, large_ship, large_ship_vert, largeShipNum, &position);
     } else if (!med_placed) {
         if (ship2){
             reset(&position);
-            place_ship_on_map (med_ship, map);
+            placeShipOnMap (med_ship, map);
             ship2 = !ship2;
         }
         move(&med_placed, med_ship, med_ship_vert, medShipNum, &position);
     } else if (!small_placed) {
         if (ship3){
             reset(&position);
-            place_ship_on_map (small_ship, map);
+            placeShipOnMap (small_ship, map);
             ship3 = !ship3;
         }
         move(&small_placed, small_ship, small_ship_vert, smallShipNum, &position);
@@ -304,7 +304,7 @@ int main (void)
                         recieved = true;
                     }
                 }
-                place_ships();
+                placeShips();
                 break;
             case SEND_MAP:
                 displayMap(placedShips[current_column], current_column);
@@ -328,7 +328,7 @@ int main (void)
 
             case YOUR_TURN:
                 if (launch) {
-                    place_ship_on_map (missile, missileMap);
+                    placeShipOnMap (missile, missileMap);
                     launch = !launch;
                 }
 
@@ -342,7 +342,7 @@ int main (void)
                         if (hits == 9) {
                             finishGame();
                         }
-                        place_ship_on_map (missile, missileMap);
+                        placeShipOnMap (missile, missileMap);
                     } 
                 }
                 moveMissile();
