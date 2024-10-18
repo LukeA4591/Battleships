@@ -1,3 +1,8 @@
+/** @file   initmove.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Listens to navswitch controls to move a ship around the map*/
+
 #include "initmove.h"
 #include <stdint.h>
 #include "navswitch.h"
@@ -9,7 +14,10 @@
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
 
-void setLims(position_t* pos, uint8_t shipNum) {
+/**
+Determines the movement limit of the current ship so that it cannot move off the LED mat
+*/
+static void setLims(position_t* pos, uint8_t shipNum) {
     if (!pos->vertical) {
         col_upper_lim = 4;
         if (shipNum == 4) {
@@ -31,7 +39,10 @@ void setLims(position_t* pos, uint8_t shipNum) {
     }   
 }
 
-void placeShip(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
+/**
+Places the current ship on the placed ships map
+*/
+static void placeShip(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
     if (!(pos->vertical)) {
         placedShips[pos->column] |= ship << pos->row;
     } else {
@@ -43,6 +54,9 @@ void placeShip(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum,
     *placed = !(*placed);
 }
 
+/**
+Uses navigation switch controls to move the current ship around the map
+ */
 void move(bool* placed, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos)
 {
     setLims (pos, shipNum);

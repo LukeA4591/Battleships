@@ -1,13 +1,20 @@
+/** @file   fileship.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the functionality of rotating ships on a map*/
 
 #include "map.h"
 #include "flipship.h"
 #include "position.h"
 
-void flipToVert (uint8_t shipNum, uint8_t vert_ship[], uint8_t col_lim, position_t* pos) {
+/**
+Flips the current ship from horizontal to vertical
+*/
+static void flipToVert(uint8_t shipNum, uint8_t vert_ship[], uint8_t col_lim, position_t* pos) {
     if (pos->column > col_lim) {
             pos->column = col_lim;
     }
-    while (!vert_collision_check(shipNum, pos->column, pos->row)) {
+    while (!vertCollisionCheck(shipNum, pos->column, pos->row)) {
         if (pos->column > 0) {
             pos->column--;
         } else {
@@ -25,12 +32,14 @@ void flipToVert (uint8_t shipNum, uint8_t vert_ship[], uint8_t col_lim, position
         map[i + pos->column] |= vert_ship[i];
     }
 }
-
-void flipToHrz (uint8_t ship, uint8_t row_lim, position_t* pos) {
+/**
+Flips the current ship from vertical to horizontal
+*/
+static void flipToHrz(uint8_t ship, uint8_t row_lim, position_t* pos) {
     if (pos->row > row_lim) {
         pos->row = row_lim;
     }
-    while(!collision_check(ship, pos->column, pos->row, placedShips)) {
+    while(!collisionCheck(ship, pos->column, pos->row, placedShips)) {
         if (pos->row > 0) {
             pos->row --;
         } else {
@@ -43,8 +52,10 @@ void flipToHrz (uint8_t ship, uint8_t row_lim, position_t* pos) {
     }
     map[pos->column] |= (ship << pos->row);
 }
-
-void flip (uint8_t shipNum, uint8_t ship, bool vert, uint8_t vert_ship[], uint8_t row_lim, uint8_t col_lim, position_t* pos) {
+/**
+Flips the oritentation of the current ship
+*/
+void flip(uint8_t shipNum, uint8_t ship, bool vert, uint8_t vert_ship[], uint8_t row_lim, uint8_t col_lim, position_t* pos) {
     resetMap ();
     if (!vert) {
         flipToVert (shipNum, vert_ship, col_lim, pos);

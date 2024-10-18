@@ -1,3 +1,9 @@
+/** @file   game.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Battleships game*/
+
+
 #include "system.h"
 #include "pio.h"
 #include "pacer.h"
@@ -5,7 +11,7 @@
 #include "button.h"
 #include "led.h"
 #include "tinygl.h"
-#include "../fonts/font5x7_1.h"
+#include "../fonts/font3x5_1.h"
 #include "timer.h"
 #include "ir_uart.h"
 #include "map.h"
@@ -43,7 +49,7 @@ static uint8_t missile = 0x01;
 uint8_t col_upper_lim;
 uint8_t row_upper_lim;
 
-int8_t turn = -1;
+int8_t playerOne = -1;
 
 void place_ship(uint8_t ship);
 
@@ -62,20 +68,38 @@ void check_bomb(char position) {
     uint8_t row = (position >> 4) & 0x0F;
     uint8_t mask = (0x01 << row);
     if((placedShips[column] & mask) != 0) {
-        ir_uart_putc('h');
+        send('h'); //hit
     } else {
-        ir_uart_putc('m');
+        send('m'); //miss
     }
 
 }
 
 
 void finishGame(void) {
-    tinygl_font_set (&font5x7_1);
-    tinygl_text_speed_set (10);
-    tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
+    if (hits == 9) {
+        tinygl_text ("YOU WON!");
+
+    } else {
+        tinygl_text ("YOU LOST");
+    }
     game_state = GAME_FINISHED;
     send('x');
+}
+
+void setStartScreen(void) {
+    tinygl_font_set (&font3x5_1);
+    tinygl_text_speed_set (15);
+    tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
+    tinygl_text("BATTLESHIPS PUSH TO START");
+}
+
+void waitToStart(void) {
+    navswitch_update ();
+    if(navswitch_push_event_p(NAVSWITCH_PUSH)) {
+        game_state = PLACE_SHIPS;
+    }
 }
 
 int main (void)
@@ -89,6 +113,7 @@ int main (void)
     button_init();
     ir_uart_init ();
     tinygl_init (1000);
+    setStartScreen();
 
     while (1) {
         pacer_wait();
@@ -98,15 +123,15 @@ int main (void)
                 if (ir_uart_read_ready_p() && !recieved) {
                     char chr = ir_uart_getc();
                     if (chr == 'a') {  // Ensure byte is valid and matches 'a'
-                        turn = 0;
+                        playerOne = 0;
                         recieved = true;
                     }
                 }
                 place_ships(&position, current_column, &turn, &game_state, &bothDone);
+                tinygl_text("WAITING FOR OPPONENT");
                 break;
             case SEND_MAP:
-                displayMap(placedShips[current_column], current_column);
-                current_column = (current_column + 1) % 5;
+                tinygl_update();
 
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
@@ -114,11 +139,10 @@ int main (void)
                         bothDone = true;
                     }
                 }
-
                 if (bothDone) {
-                    if (turn == 0) {
+                    if (playerOne == 0) {
                     game_state = THEIR_TURN;
-                } else if (turn == 1) {
+                } else if (playerOne == 1) {
                     game_state = YOUR_TURN;
                 }
                 }
@@ -132,10 +156,10 @@ int main (void)
 
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
-                    if (chr == 'm') {
+                    if (chr == 'm') { //Player missed
                         game_state = THEIR_TURN;
-                        send ('n');
-                    } else if (chr == 'h') {
+                        send ('n'); //Tell opponent to switch turn
+                    } else if (chr == 'h') { //Player hit
                         hits++;
                         if (hits == 9) {
                             finishGame();
@@ -149,24 +173,24 @@ int main (void)
             case THEIR_TURN:
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
-                    if (chr == 'n') {
+                    if (chr == 'n') { //Told to switch turn
                         game_state = YOUR_TURN;
-                    } else if (chr == 'x') {
+                    } else if (chr == 'x') { //Told to end game
                         finishGame ();
-                    } else if (chr <= 100) {
+                    } else if (chr <= 100) { //Received a missile
                         check_bomb(chr);
                     }
                 }
                 receiving_bombs();
                 break;
             case GAME_FINISHED:
-                if (hits == 9) {
-                    tinygl_text ("W");
-                } else {
-                    tinygl_text ("L");
-                }
                 tinygl_update();
                 break;
+//            case START_SCREEN:
+//                tinygl_update();
+//                waitToStart();
+//                break;
+
         }
     }
 }

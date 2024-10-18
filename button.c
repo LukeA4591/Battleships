@@ -1,3 +1,8 @@
+/** @file   button.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the fucntionality of the pushbutton*/
+
 #include <avr/io.h>
 #include "button.h"
 

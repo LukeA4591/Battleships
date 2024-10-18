@@ -1,3 +1,8 @@
+/** @file   led.h
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Provides function declarations for functionality of led*/
+
 #ifndef LED_H
 #define LED_H
 
