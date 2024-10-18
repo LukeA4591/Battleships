@@ -119,10 +119,10 @@ int main (void)
     ir_uart_init ();
     tinygl_init (1000);
     setStartScreen();
-
+    // main loop for the game
     while (1) {
         pacer_wait();
-
+        // switch for game state
         switch (game_state) {
             case PLACE_SHIPS:
                 if (ir_uart_read_ready_p() && !recieved) {
@@ -132,18 +132,19 @@ int main (void)
                         recieved = true;
                     }
                 }
-                placeShips(&position, &playerOne, &game_state, &bothDone);
+                placeShips(&position, &playerOne, &game_state, &bothDone); // place the ship
                 tinygl_text("WAITING FOR OPPONENT");
                 break;
             case SEND_MAP:
                 tinygl_update();
-
+                // wait for other player to place their ships
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
                     if (chr == 'b') {
                         bothDone = true;
                     }
                 }
+                // set turns when both players have placed their ships
                 if (bothDone) {
                     if (playerOne == 0) {
                         game_state = THEIR_TURN;
@@ -158,7 +159,7 @@ int main (void)
                     placeObjectOnMap (missile, missileMap, &position);
                     launch = !launch;
                 }
-
+                // after sending missile, listen for hit or miss.
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
                     if (chr == 'm') { //Player missed
@@ -169,7 +170,7 @@ int main (void)
                         if (hits == 9) {
                             finishGame();
                         }
-                        placeObjectOnMap (missile, missileMap, &position);
+                        placeObjectOnMap (missile, missileMap, &position); // if hit show on map
                     } 
                 }
                 moveMissile(&position, missile);

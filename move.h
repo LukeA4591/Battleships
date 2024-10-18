@@ -10,12 +10,42 @@
 #include "position.h"
 #include "initmove.h"
 
-void down(uint8_t col_upper_lim, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos);
+/**
+ * move ship down
+ * @param colUpperLim
+ * @param ship
+ * @param vertShip
+ * @param shipNum
+ * @param pos
+ */
+void down(uint8_t colUpperLim, uint8_t ship, uint8_t vertShip[], uint8_t shipNum, position_t* pos);
 
-void up (uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos);
+/**
+ * move ship up
+ * @param ship
+ * @param vertShip
+ * @param shipNum
+ * @param pos
+ */
+void up (uint8_t ship, uint8_t vertShip[], uint8_t shipNum, position_t* pos);
 
-void left (uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos);
+/**
+ * move ship left
+ * @param ship
+ * @param vertShip
+ * @param shipNum
+ * @param pos
+ */
+void left (uint8_t ship, uint8_t vertShip[], uint8_t shipNum, position_t* pos);
 
-void right (uint8_t row_upper_lim, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos);
+/**
+ * move ship right
+ * @param rowUpperLim
+ * @param ship
+ * @param vertShip
+ * @param shipNum
+ * @param pos
+ */
+void right (uint8_t rowUpperLim, uint8_t ship, uint8_t vertShip[], uint8_t shipNum, position_t* pos);
 
 #endif

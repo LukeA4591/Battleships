@@ -4,7 +4,6 @@
     @brief  Module to control the display of the game on the LED mat*/
 
 #include <mapfunctions.h>
-#include <stddef.h>
 #include "pio.h"
 #include "map.h"
 #define NUM_COLS 5
@@ -41,8 +40,10 @@ void initLedMat(void) {
 }
 
 /**
-Displays a given row_pattern on the given column of the map
-*/
+ * Displays a given row_pattern on the given column of the map
+ * @param row_pattern
+ * @param current_column
+ */
 void displayMap(uint8_t row_pattern, uint8_t current_column)
 {
     pio_output_high(cols[prev_column]);
@@ -74,6 +75,9 @@ void placeObjectOnMap(uint8_t ship, uint8_t map[], position_t* pos) {
     }
 }
 
+/**
+ * reset maps to play again
+ */
 void resetMaps(void) {
     for (int i = 0; i < NUM_COLS; i++) {
         map[i] = 0;
@@ -81,3 +85,4 @@ void resetMaps(void) {
         missileMap[i] = 0;
     }
 }
+

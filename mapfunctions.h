@@ -15,17 +15,22 @@ Initialises the LedMat, all LEDs off
 void initLedMat(void);
 
 /**
-Displays a given row_pattern on the given column of the map
-*/
+ * Displays a given row_pattern on the given column of the map
+ * @param ship
+ * @param map
+ * @param pos
+ */
 void placeObjectOnMap(uint8_t ship, uint8_t map[], position_t* pos);
 
 /**
-Places the ship on the currently displayed map
+ * Places the ship on the currently displayed map
+ * @param row_pattern
+ * @param current_column
  */
 void displayMap(uint8_t row_pattern, uint8_t current_column);
 
 /**
-Resets the maps to play again
+ * Resets the maps to play again
  */
 void resetMaps(void);
 

@@ -25,9 +25,10 @@ uint8_t largeShipNum = 4;
 uint8_t medShipNum = 3;
 uint8_t smallShipNum = 2;
 uint8_t current_colu = 0;
-bool ship1 = true;
-bool ship2 = true;
-bool ship3 = true;
+bool placeLarge = true;
+bool planeMed = true;
+bool placeSmall = true;
+
 
 /**
 Method to switch between the current ships as they are being placed and handle their placing
@@ -40,23 +41,23 @@ void placeShips(position_t* pos, int8_t* turn, game_state_t* game_state, bool* b
         current_colu = 0;
     }
     if (!large_placed) {
-        if (ship1) {
+        if (placeLarge) {
             placeObjectOnMap (large_ship, map, pos);
-            ship1 = !ship1;
+            placeLarge = !placeLarge;
         }
         move(&large_placed, large_ship, large_ship_vert, largeShipNum, pos);
     } else if (!med_placed) {
-        if (ship2){
+        if (planeMed){
             reset(pos);
             placeObjectOnMap (med_ship, map, pos);
-            ship2 = !ship2;
+            planeMed = !planeMed;
         }
         move(&med_placed, med_ship, med_ship_vert, medShipNum, pos);
     } else if (!small_placed) {
-        if (ship3){
+        if (placeSmall){
             reset(pos);
             placeObjectOnMap (small_ship, map, pos);
-            ship3 = !ship3;
+            placeSmall = !placeSmall;
         }
         move(&small_placed, small_ship, small_ship_vert, smallShipNum, pos);
     } else {
@@ -69,9 +70,9 @@ void placeShips(position_t* pos, int8_t* turn, game_state_t* game_state, bool* b
             *bothDone = true;
             *game_state = SEND_MAP;
         }
-        ship1 = true;
-        ship2 = true;
-        ship3 = true;
+        placeLarge = true;
+        planeMed = true;
+        placeSmall = true;
         large_placed = false;
         med_placed = false;
         small_placed = false;
