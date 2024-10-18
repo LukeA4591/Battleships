@@ -31,7 +31,7 @@
 #define NUM_COLS 5
 #define NUM_ROWS 7
 
-static game_state_t game_state = PLACE_SHIPS;
+static game_state_t game_state = START_SCREEN;
 
 uint8_t current_col = 0;
 uint8_t hits = 0;
@@ -51,8 +51,10 @@ uint8_t row_upper_lim;
 
 int8_t playerOne = -1;
 
-//opponent will wait for a bomb and return whether it is a hit or not
-void receiving_bombs(void) {
+/**
+Displays the map of placed ships
+*/
+void displayPlacedShips(void) {
     displayMap(placedShips[current_col], current_col);
     current_col++;
     if (current_col > 4)
@@ -61,7 +63,10 @@ void receiving_bombs(void) {
     }
 }
 
-void check_bomb(char position) {
+/**
+Determines whether the received missile is a hit or miss, sends this information back to opponent
+ */
+void checkMissile(char position) {
     uint8_t column = position & 0x0F;
     uint8_t row = (position >> 4) & 0x0F;
     uint8_t mask = (0x01 << row);
@@ -73,18 +78,23 @@ void check_bomb(char position) {
 
 }
 
-
+/**
+Prepares game over text and tells opponent to finish their game
+ */
 void finishGame(void) {
     if (hits == 9) {
-        tinygl_text ("YOU WON!");
+        tinygl_text ("YOU WON! PUSH TO PLAY AGAIN");
 
     } else {
-        tinygl_text ("YOU LOST");
+        tinygl_text ("YOU LOST PUSH TO PLAY AGAIN");
     }
     game_state = GAME_FINISHED;
     send('x');
 }
 
+/**
+Initialises tinygl and sets start screen text
+ */
 void setStartScreen(void) {
     tinygl_font_set (&font3x5_1);
     tinygl_text_speed_set (15);
@@ -93,6 +103,9 @@ void setStartScreen(void) {
     tinygl_text("BATTLESHIPS PUSH TO START");
 }
 
+/**
+Waits for navigation switch to be pushed before starting game
+ */
 void waitToStart(void) {
     navswitch_update ();
     if(navswitch_push_event_p(NAVSWITCH_PUSH)) {
@@ -125,7 +138,7 @@ int main (void)
                         recieved = true;
                     }
                 }
-                place_ships(&position, &playerOne, &game_state, &bothDone);
+                placeShips(&position, &playerOne, &game_state, &bothDone);
                 tinygl_text("WAITING FOR OPPONENT");
                 break;
             case SEND_MAP:
@@ -148,7 +161,7 @@ int main (void)
 
             case YOUR_TURN:
                 if (launch) {
-                    place_ship_on_map (missile, missileMap, &position);
+                    placeObjectOnMap (missile, missileMap, &position);
                     launch = !launch;
                 }
 
@@ -162,7 +175,7 @@ int main (void)
                         if (hits == 9) {
                             finishGame();
                         }
-                        place_ship_on_map (missile, missileMap, &position);
+                        placeObjectOnMap (missile, missileMap, &position);
                     } 
                 }
                 moveMissile(&position, missile);
@@ -176,10 +189,10 @@ int main (void)
                     } else if (chr == 'x') { //Told to end game
                         finishGame ();
                     } else if (chr <= 100) { //Received a missile
-                        check_bomb(chr);
+                        checkMissile(chr);
                     }
                 }
-                receiving_bombs();
+                displayPlacedShips();
                 break;
             case GAME_FINISHED:
                 tinygl_update();
@@ -191,3 +204,4 @@ int main (void)
         }
     }
 }
+

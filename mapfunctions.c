@@ -1,3 +1,8 @@
+/** @file   mapfunctions.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module to control the display of the game on the LED mat*/
+
 #include <mapfunctions.h>
 #include <stddef.h>
 #include "pio.h"
@@ -19,6 +24,10 @@ static const pio_t cols[] =
 
 static uint8_t prev_column = 4;
 
+
+/**
+Initialises the LedMat, all LEDs off
+*/
 void initLedMat(void) {
     for (size_t i = 0; i < 7; i++)
     {
@@ -30,6 +39,9 @@ void initLedMat(void) {
     }
 }
 
+/**
+Displays a given row_pattern on the given column of the map
+*/
 void displayMap(uint8_t row_pattern, uint8_t current_column)
 {
     pio_output_high(cols[prev_column]);
@@ -45,7 +57,10 @@ void displayMap(uint8_t row_pattern, uint8_t current_column)
     prev_column = current_column;
 }
 
-void place_ship_on_map(uint8_t ship, uint8_t map[], position_t* pos) {
+/**
+Places the ship on the currently displayed map
+ */
+void placeObjectOnMap(uint8_t ship, uint8_t map[], position_t* pos) {
     for (size_t i = 0; i < 7; i++) {
         for (size_t j = 0; j < 5; j++){
             if ((map[j] & (ship << i)) == 0) {
