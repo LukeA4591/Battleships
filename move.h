@@ -1,3 +1,8 @@
+/** @file   move.h
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Provides function delcartions for the functionality of the movement of objects on a map*/
+
 #ifndef MOVE_H
 #define MOVE_H
 

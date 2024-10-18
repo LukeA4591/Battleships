@@ -1,3 +1,8 @@
+/** @file   led.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the functionality of led*/
+
 #include <avr/io.h>
 #include "led.h"
 

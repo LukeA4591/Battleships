@@ -1,3 +1,8 @@
+/** @file   button.h
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Provides function delcarations for the fucntionality of the pushbutton*/
+
 #ifndef BUTTON_H
 #define BUTTON_H
 

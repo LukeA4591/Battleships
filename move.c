@@ -1,3 +1,8 @@
+/** @file   move.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the functionality of the movement of objects on a map*/
+
 #include "move.h"
 #include "map.h"
 #include "position.h"

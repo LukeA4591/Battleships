@@ -1,6 +1,6 @@
 # File:   Makefile
-# Author: M. P. Hayes, UCECE
-# Date:   12 Sep 2010
+# Authors: Luke Armstrong, Tyla Holmes
+# Date:   18 Oct 2024
 # Descr:  Makefile for game
 
 # Definitions.
@@ -35,9 +35,6 @@ display.o: ../../drivers/display.c ../../drivers/avr/system.h ../../drivers/disp
 	$(CC) -c $(CFLAGS) $< -o $@
 
 ledmat.o: ../../drivers/ledmat.c ../../drivers/avr/pio.h ../../drivers/avr/system.h ../../drivers/ledmat.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
-font.o: ../../utils/font.c ../../drivers/avr/system.h ../../utils/font.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 pacer.o: ../../utils/pacer.c ../../drivers/avr/system.h ../../drivers/avr/timer.h ../../utils/pacer.h
