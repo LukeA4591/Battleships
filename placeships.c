@@ -1,3 +1,8 @@
+/** @file   placeships.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the placing of ships on a map */
+
 #include "placeships.h"
 #include "map.h"
 #include "position.h"
@@ -24,7 +29,10 @@ bool ship1 = true;
 bool ship2 = true;
 bool ship3 = true;
 
-void place_ships(position_t* pos, int8_t* turn, game_state_t* game_state, bool* bothDone) {
+/**
+Method to switch between the current ships as they are being placed and handle their placing
+ */
+void placeShips(position_t* pos, int8_t* turn, game_state_t* game_state, bool* bothDone) {
     displayMap(map[current_colu], current_colu);
     current_colu++;
     if (current_colu > NUM_COLS - 1)
@@ -33,21 +41,21 @@ void place_ships(position_t* pos, int8_t* turn, game_state_t* game_state, bool* 
     }
     if (!large_placed) {
         if (ship1) {
-            place_ship_on_map (large_ship, map, pos);
+            placeObjectOnMap (large_ship, map, pos);
             ship1 = !ship1;
         }
         move(&large_placed, large_ship, large_ship_vert, largeShipNum, pos);
     } else if (!med_placed) {
         if (ship2){
             reset(pos);
-            place_ship_on_map (med_ship, map, pos);
+            placeObjectOnMap (med_ship, map, pos);
             ship2 = !ship2;
         }
         move(&med_placed, med_ship, med_ship_vert, medShipNum, pos);
     } else if (!small_placed) {
         if (ship3){
             reset(pos);
-            place_ship_on_map (small_ship, map, pos);
+            placeObjectOnMap (small_ship, map, pos);
             ship3 = !ship3;
         }
         move(&small_placed, small_ship, small_ship_vert, smallShipNum, pos);

@@ -1,3 +1,8 @@
+/** @file   gaemstate.h
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Provides the enum for gamestate*/
+
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 

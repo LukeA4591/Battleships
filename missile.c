@@ -1,3 +1,8 @@
+/** @file   missile.c
+    @author Luke Armstrong, Tyla Holmes
+    @date   18 Oct 2024
+    @brief  Module that controls the functionality for missiles/shooting in battleships*/
+
 #include "missile.h"
 #include "map.h"
 #include "navswitch.h"
@@ -7,11 +12,17 @@
 
 uint8_t current_column = 0;
 
-//Send position to opponent, opponent returns true 0 for miss, 1 for hit
+/**
+Sends the position of the shot missile to the opponent
+*/
 void shootMissile(position_t* pos) {
     char position = (pos->row << 4) | (pos->column & 0x0F); //encode column and row into single char
     send (position);
 }
+
+/**
+Uses navigation switch controls to move the missile cursor round the map
+ */
 void moveMissile(position_t* pos, uint8_t missile) {
     displayMap(missileMap[current_column], current_column);
     current_column++;
