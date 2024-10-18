@@ -7,7 +7,8 @@ typedef enum
     SEND_MAP,
     YOUR_TURN,
     THEIR_TURN,
-    GAME_FINISHED
+    GAME_FINISHED,
+    START_SCREEN
 
 } game_state_t;
 
