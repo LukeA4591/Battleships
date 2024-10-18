@@ -23,6 +23,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
+
+
+
 #define NUM_COLS 5
 #define NUM_ROWS 7
 
@@ -242,10 +245,12 @@ void placeShips(void) {
             playerOne = 1;
             send ('a');
             game_state = SEND_MAP;
+            
         } else {
             send ('b');
             bothDone = true;
             game_state = SEND_MAP;
+            
         }
     }
 }
@@ -253,7 +258,7 @@ void placeShips(void) {
 /*
 Finishes the game and tells opponent to finish their game
 */
-void finishGame(void) {;
+void finishGame(void) {
     if (hits == 9) {
         tinygl_text ("YOU WON!");
 
@@ -294,7 +299,6 @@ int main (void)
 
     while (1) {
         pacer_wait();
-
         switch (game_state) {
             case PLACE_SHIPS:
                 if (ir_uart_read_ready_p() && !recieved) {
@@ -305,10 +309,10 @@ int main (void)
                     }
                 }
                 placeShips();
+                tinygl_text("WAITING FOR OPPONENT");
                 break;
             case SEND_MAP:
-                displayMap(placedShips[current_column], current_column);
-                current_column = (current_column + 1) % 5;
+                tinygl_update();
 
                 if (ir_uart_read_ready_p()) {
                     char chr = ir_uart_getc();
@@ -316,7 +320,6 @@ int main (void)
                         bothDone = true;
                     }
                 }
-
                 if (bothDone) {
                     if (playerOne == 0) {
                     game_state = THEIR_TURN;
