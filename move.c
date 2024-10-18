@@ -44,13 +44,13 @@ void placeHrzColUp (uint8_t ship, position_t* pos) {
 }
 
 void hrzDown (uint8_t lim, uint8_t ship, position_t* pos) {
-    if ((pos->column < lim) && collision_check(ship, pos->column + 1, pos->row, placedShips)) {
+    if ((pos->column < lim) && collisionCheck(ship, pos->column + 1, pos->row, placedShips)) {
         placeHrzColDown (ship, pos);
     }
 }
 
 void vertDown (uint8_t col_upper_lim, uint8_t shipNum, uint8_t vert_ship[], position_t* pos) {
-    if ((pos->column < col_upper_lim) && vert_collision_check(shipNum, pos->column + 1, pos->row)) {
+    if ((pos->column < col_upper_lim) && vertCollisionCheck(shipNum, pos->column + 1, pos->row)) {
         resetMap ();
         pos->column++;
         placeVertCol (shipNum, vert_ship, pos);
@@ -58,13 +58,13 @@ void vertDown (uint8_t col_upper_lim, uint8_t shipNum, uint8_t vert_ship[], posi
 }
 
 void hrzUp (uint8_t ship, position_t* pos) {
-    if ((pos->column > col_lower_lim) && collision_check(ship, pos->column - 1, pos->row, placedShips)) {
+    if ((pos->column > col_lower_lim) && collisionCheck(ship, pos->column - 1, pos->row, placedShips)) {
         placeHrzColUp (ship, pos);
     }
 }
 
 void vertUp (uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
-    if ((pos->column > col_lower_lim) && vert_collision_check(shipNum, pos->column - 1, pos->row)) {
+    if ((pos->column > col_lower_lim) && vertCollisionCheck(shipNum, pos->column - 1, pos->row)) {
         resetMap ();
         pos->column--;
         placeVertCol (shipNum, vert_ship, pos);
@@ -72,14 +72,14 @@ void vertUp (uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
 }
 
 void hrzLeft (uint8_t ship, position_t* pos) {
-    if ((pos->row > row_lower_lim) && collision_check(ship, pos->column, pos->row - 1, placedShips)) {
+    if ((pos->row > row_lower_lim) && collisionCheck(ship, pos->column, pos->row - 1, placedShips)) {
         pos->row--;
         placeHrzRow (ship, pos);
     }
 }
 
 void vertLeft (uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
-    if ((pos->row > row_lower_lim) && vert_collision_check(shipNum, pos->column, pos->row - 1)) {
+    if ((pos->row > row_lower_lim) && vertCollisionCheck(shipNum, pos->column, pos->row - 1)) {
         resetMap ();
         pos->row--;
         placeVertRow(shipNum, vert_ship, pos);
@@ -87,14 +87,14 @@ void vertLeft (uint8_t vert_ship[], uint8_t shipNum, position_t* pos) {
 }
 
 void hrzRight (uint8_t row_upper_lim, uint8_t ship, position_t* pos) {
-    if ((pos->row < row_upper_lim) && collision_check(ship, pos->column, pos->row + 1, placedShips)) {
+    if ((pos->row < row_upper_lim) && collisionCheck(ship, pos->column, pos->row + 1, placedShips)) {
         pos->row++;
         placeHrzRow (ship, pos);
     }
 }
 
 void vertRight (uint8_t row_upper_lim, uint8_t shipNum, uint8_t vert_ship[], position_t* pos) {
-    if ((pos->row < row_upper_lim) && vert_collision_check(shipNum, pos->column, pos->row + 1)) {
+    if ((pos->row < row_upper_lim) && vertCollisionCheck(shipNum, pos->column, pos->row + 1)) {
         resetMap ();
         pos->row++;
         placeVertRow(shipNum, vert_ship, pos);
