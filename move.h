@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "position.h"
+#include "initmove.h"
 
 void down(uint8_t col_upper_lim, uint8_t ship, uint8_t vert_ship[], uint8_t shipNum, position_t* pos);
 

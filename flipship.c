@@ -5,63 +5,61 @@
 
 #include "map.h"
 #include "flipship.h"
-
+#include "position.h"
 
 /**
 Flips the current ship from horizontal to vertical
 */
-static void flipToVert(uint8_t shipNum, uint8_t vert_ship[], uint8_t col_lim, uint8_t column, uint8_t row) {
-    if (column > col_lim) {
-            column = col_lim;
+static void flipToVert(uint8_t shipNum, uint8_t vert_ship[], uint8_t col_lim, position_t* pos) {
+    if (pos->column > col_lim) {
+            pos->column = col_lim;
     }
-    while (!vert_collision_check(shipNum, column, row)) {
-        if (column > 0) {
-            column--;
+    while (!vertCollisionCheck(shipNum, pos->column, pos->row)) {
+        if (pos->column > 0) {
+            pos->column--;
         } else {
-            if (row < 6) {
-                row++;
+            if (pos->row < 6) {
+                pos->row++;
             } else {
-                row = 0;
+                pos->row = 0;
             }
         }
     }
     for (int i = 0; i < shipNum; i++) {
-        vert_ship[i] = (0x01 << row);
+        vert_ship[i] = (0x01 << pos->row);
     }
     for (int i = 0; i < shipNum; i++) {
-        map[i + column] |= vert_ship[i];
+        map[i + pos->column] |= vert_ship[i];
     }
 }
-
 /**
 Flips the current ship from vertical to horizontal
 */
-static void flipToHrz(uint8_t ship, uint8_t row_lim, uint8_t column, uint8_t row) {
-    if (row > row_lim) {
-        row = row_lim;
+static void flipToHrz(uint8_t ship, uint8_t row_lim, position_t* pos) {
+    if (pos->row > row_lim) {
+        pos->row = row_lim;
     }
-    while(!collision_check(ship, column, row, placedShips)) {
-        if (row > 0) {
-            row --;
+    while(!collisionCheck(ship, pos->column, pos->row, placedShips)) {
+        if (pos->row > 0) {
+            pos->row --;
         } else {
-            if (column < 4) {
-                column++;
+            if (pos->column < 4) {
+                pos->column++;
             } else {
-                column = 0;
+                pos->column = 0;
             }
         }
     }
-    map[column] |= (ship << row);
+    map[pos->column] |= (ship << pos->row);
 }
-
 /**
 Flips the oritentation of the current ship
 */
-void flip(uint8_t shipNum, uint8_t ship, bool vert, uint8_t vert_ship[], uint8_t row_lim, uint8_t col_lim, uint8_t column, uint8_t row) {
+void flip(uint8_t shipNum, uint8_t ship, bool vert, uint8_t vert_ship[], uint8_t row_lim, uint8_t col_lim, position_t* pos) {
     resetMap ();
     if (!vert) {
-        flipToVert (shipNum, vert_ship, col_lim, column, row);
+        flipToVert (shipNum, vert_ship, col_lim, pos);
     } else {
-        flipToHrz (ship, row_lim, column, row);
+        flipToHrz (ship, row_lim, pos);
     }
 }

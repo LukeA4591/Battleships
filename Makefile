@@ -76,10 +76,11 @@ flipship.o: flipship.c flipship.h
 position.o: position.c position.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-
+initmove.o: initmove.c initmove.h
+	$(CC) -c $(CFLAGS) $< -o $@
 
 # Link: create ELF output file from object files.
-game.out: game.o system.o pio.o timer.o button.o display.o ledmat.o font.o pacer.o navswitch.o tinygl.o ir_uart.o led.o timer0.o usart1.o prescale.o map.o move.o flipship.o position.o
+game.out: game.o system.o pio.o timer.o button.o display.o ledmat.o font.o pacer.o navswitch.o tinygl.o ir_uart.o led.o timer0.o usart1.o prescale.o map.o move.o flipship.o position.o initmove.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
