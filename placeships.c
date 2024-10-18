@@ -19,16 +19,17 @@ uint8_t small_ship_vert[2] = {0x01, 0x01};
 uint8_t largeShipNum = 4;
 uint8_t medShipNum = 3;
 uint8_t smallShipNum = 2;
+uint8_t current_colu = 0;
 bool ship1 = true;
 bool ship2 = true;
 bool ship3 = true;
 
-void place_ships(position_t* pos, uint8_t current_column, int8_t* turn, game_state_t* game_state, bool* bothDone) {
-    displayMap(map[current_column], current_column);
-    current_column++;
-    if (current_column > NUM_COLS - 1)
+void place_ships(position_t* pos, int8_t* turn, game_state_t* game_state, bool* bothDone) {
+    displayMap(map[current_colu], current_colu);
+    current_colu++;
+    if (current_colu > NUM_COLS - 1)
     {
-        current_column = 0;
+        current_colu = 0;
     }
     if (!large_placed) {
         if (ship1) {

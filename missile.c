@@ -5,12 +5,14 @@
 #include "mapfunctions.h"
 #include "send.h"
 
+uint8_t current_column = 0;
+
 //Send position to opponent, opponent returns true 0 for miss, 1 for hit
 void shootMissile(position_t* pos) {
     char position = (pos->row << 4) | (pos->column & 0x0F); //encode column and row into single char
     send (position);
 }
-void moveMissile(position_t* pos, uint8_t missile, uint8_t current_column) {
+void moveMissile(position_t* pos, uint8_t missile) {
     displayMap(missileMap[current_column], current_column);
     current_column++;
     if (current_column > 4)

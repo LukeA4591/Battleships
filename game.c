@@ -33,7 +33,7 @@
 
 static game_state_t game_state = PLACE_SHIPS;
 
-uint8_t current_column = 0;
+uint8_t current_col = 0;
 uint8_t hits = 0;
 
 position_t position;
@@ -53,11 +53,11 @@ int8_t playerOne = -1;
 
 //opponent will wait for a bomb and return whether it is a hit or not
 void receiving_bombs(void) {
-    displayMap(placedShips[current_column], current_column);
-    current_column++;
-    if (current_column > 4)
+    displayMap(placedShips[current_col], current_col);
+    current_col++;
+    if (current_col > 4)
     {
-        current_column = 0;
+        current_col = 0;
     }
 }
 
@@ -125,7 +125,7 @@ int main (void)
                         recieved = true;
                     }
                 }
-                place_ships(&position, current_column, &playerOne, &game_state, &bothDone);
+                place_ships(&position, &playerOne, &game_state, &bothDone);
                 tinygl_text("WAITING FOR OPPONENT");
                 break;
             case SEND_MAP:
@@ -165,7 +165,7 @@ int main (void)
                         place_ship_on_map (missile, missileMap, &position);
                     } 
                 }
-                moveMissile(&position, missile, current_column);
+                moveMissile(&position, missile);
                 break;
 
             case THEIR_TURN:

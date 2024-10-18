@@ -3,6 +3,6 @@
 
 #include "position.h"
 
-void moveMissile(position_t* pos, uint8_t missile, uint8_t current_column);
+void moveMissile(position_t* pos, uint8_t missile);
 
 #endif // MOVEMISSILE_H
